@@ -1,81 +1,86 @@
 # Comfort Stays PG Website
 
-A modern, responsive website for Comfort Stays PG accommodation in Ahmedabad. Built with React, TypeScript, and Vite.
+A modern, responsive static website for Comfort Stays PG accommodation in Ahmedabad. Built with pure HTML, CSS, and JavaScript for maximum SEO performance.
 
 ## Features
 
 - 🏠 Beautiful, modern design with gradient hero section
 - 📱 Fully responsive for mobile, tablet, and desktop
-- ⚙️ Easy configuration system for future updates
+- 🚀 **Maximum SEO performance** - pure HTML/CSS
+- ⚡ **Instant loading** - no JavaScript frameworks
 - 🎨 Modern UI with smooth animations and hover effects
 - 📞 Contact information with clickable phone and email links
-- 💰 Dynamic pricing display
+- 💰 Clear pricing display
 - 🏢 Amenities showcase with icons
+- 🗺️ Interactive Google Maps integration
 
 ## Quick Updates
 
 ### Changing Target Audience (Girls → Boys → All)
 
-To change the target audience, simply edit `src/config.ts`:
+To change the target audience, edit the text in `index.html`:
 
-```typescript
-// Change this line in src/config.ts
-targetAudience: "girls", // Change to "boys" or "all"
+```html
+<!-- Change this line in index.html -->
+<p class="hero-subtitle">Premium Girls' Accommodation in Ahmedabad</p>
+<!-- Change "Girls'" to "Boys'" or "Student" -->
 ```
 
 ### Updating Contact Information
 
-Edit the contact section in `src/config.ts`:
+Edit the contact section in `index.html`:
 
-```typescript
-contact: {
-  phone: "+91 7802004735",
-  email: "harshkanjariya.official@gmail.com",
-  // ... rest of the address
-}
+```html
+<!-- Phone number -->
+<p><a href="tel:+917802004735">+91 7802004735</a></p>
+
+<!-- Email -->
+<p><a href="mailto:harshkanjariya.official@gmail.com">harshkanjariya.official@gmail.com</a></p>
+
+<!-- Address -->
+<p>Maharaja Palace, University Road, 120 Feet Ring Rd,<br>
+AEC Char Rasta, University Area,<br>
+Ahmedabad, Gujarat 380009</p>
 ```
 
 ### Updating Pricing
 
-Modify the pricing in `src/config.ts`:
+Modify the pricing in `index.html`:
 
-```typescript
-pricing: {
-  startingPrice: 6500,
-  currency: "₹",
-  period: "per month"
-}
+```html
+<div class="price">₹6,500</div>
+<p class="price-period">per month</p>
 ```
 
 ### Adding/Removing Amenities
 
-Update the amenities array in `src/config.ts`:
+Update the amenities section in `index.html`:
 
-```typescript
-amenities: [
-  {
-    icon: "🏠",
-    title: "Room Options",
-    description: "AC and Non-AC rooms available..."
-  },
-  // Add or remove amenities here
-]
+```html
+<div class="amenity-card">
+  <div class="amenity-icon">🏠</div>
+  <h3>Room Options</h3>
+  <p>AC and Non-AC rooms available...</p>
+</div>
+<!-- Copy this block and modify for new amenities -->
 ```
 
 ## Development
 
+Since this is a static website, you can:
+
+1. **Edit files directly** - `index.html` and `styles.css`
+2. **Preview locally** - Open `index.html` in any web browser
+3. **No build process** - Changes are instant!
+
+### Local Development
+
 ```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
+# Simply open index.html in your browser
+open index.html
+# or
+python -m http.server 8000
+# Then visit http://localhost:8000
 ```
 
 ## Current Configuration
@@ -93,7 +98,7 @@ The website is designed to easily expand for boys' accommodation or co-ed facili
 
 ### GitHub Pages (Recommended - Free!)
 
-This website is configured for automatic deployment to GitHub Pages:
+This static website is configured for automatic deployment to GitHub Pages:
 
 1. **Create GitHub repository** named `comfort-stays-pg`
 2. **Push your code** to GitHub
@@ -106,8 +111,8 @@ See [deploy.md](./deploy.md) for detailed step-by-step instructions.
 
 For other hosting services:
 
-1. Run `npm run build` to create optimized build files
-2. Upload the `dist` folder to your web hosting service
+1. **Upload files directly** - `index.html`, `styles.css`, and `public/` folder
+2. **No build process needed** - just upload the files
 3. Configure your domain to point to the hosting service
 
 The website is completely static and can be hosted on any web server or CDN.
@@ -115,6 +120,6 @@ The website is completely static and can be hosted on any web server or CDN.
 ### Automatic Updates
 
 Once deployed to GitHub Pages, every push to the `main` branch automatically:
-- ✅ Builds the website
-- ✅ Deploys to GitHub Pages  
-- ✅ Updates the live website within 2-3 minutes
+- ✅ Deploys the static files directly
+- ✅ Updates the live website within 1-2 minutes
+- ✅ No build time required - instant deployment!

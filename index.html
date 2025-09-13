@@ -1,13 +1,299 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Primary Meta Tags -->
+    <title>Comfort Stays PG - Premium Girls Accommodation in Ahmedabad | ₹6,500/Month</title>
+    <meta name="title" content="Comfort Stays PG - Premium Girls Accommodation in Ahmedabad | ₹6,500/Month" />
+    <meta name="description" content="Comfort Stays PG offers premium girls accommodation in Ahmedabad near university areas. AC/Non-AC rooms, meals included, free WiFi, water heater, security cameras. Starting ₹6,500/month." />
+    <meta name="keywords" content="PG Ahmedabad, Girls PG Ahmedabad, University Road PG, Comfort Stays PG, Student accommodation Ahmedabad, PG near university, AC PG Ahmedabad, Affordable PG Ahmedabad" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://comfort-stays-pg.in/" />
+    <meta property="og:title" content="Comfort Stays PG - Premium Girls Accommodation in Ahmedabad" />
+    <meta property="og:description" content="Premium girls accommodation in Ahmedabad with all modern amenities. AC/Non-AC rooms, meals included, free WiFi, security cameras. Starting ₹6,500/month." />
+    <meta property="og:image" content="https://comfort-stays-pg.in/og-image.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://comfort-stays-pg.in/" />
+    <meta property="twitter:title" content="Comfort Stays PG - Premium Girls Accommodation in Ahmedabad" />
+    <meta property="twitter:description" content="Premium girls accommodation in Ahmedabad with all modern amenities. AC/Non-AC rooms, meals included, free WiFi, security cameras. Starting ₹6,500/month." />
+    <meta property="twitter:image" content="https://comfort-stays-pg.in/og-image.jpg" />
+
+    <!-- Additional SEO -->
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Comfort Stays PG" />
+    <meta name="geo.region" content="IN-GJ" />
+    <meta name="geo.placename" content="Ahmedabad" />
+    <meta name="geo.position" content="23.040827975990204;72.54907747029554" />
+    <meta name="ICBM" content="23.040827975990204, 72.54907747029554" />
+    <link rel="canonical" href="https://comfort-stays-pg.in/" />
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "LodgingBusiness",
+      "name": "Comfort Stays PG",
+      "description": "Premium girls accommodation in Ahmedabad near university areas with AC/Non-AC rooms, meals included, free WiFi, water heater, and security cameras",
+      "url": "https://comfort-stays-pg.in/",
+      "logo": "https://comfort-stays-pg.in/pg-logo.png",
+      "image": "https://comfort-stays-pg.in/pg-logo.png",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Maharaja Palace, University Road, 120 Feet Ring Rd, AEC Char Rasta, University Area",
+        "addressLocality": "Ahmedabad",
+        "addressRegion": "Gujarat",
+        "postalCode": "380009",
+        "addressCountry": "IN"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": 23.040827975990204,
+        "longitude": 72.54907747029554
+      },
+      "telephone": "+91 7802004735",
+      "email": "harshkanjariya.official@gmail.com",
+      "priceRange": "₹6500-8000",
+      "amenityFeature": [
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Air Conditioning"
+        },
+        {
+          "@type": "LocationFeatureSpecification", 
+          "name": "Free WiFi"
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Meals Included"
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Water Heater"
+        },
+        {
+          "@type": "LocationFeatureSpecification",
+          "name": "Security Cameras"
+        }
+      ],
+      "openingHours": "Mo-Su 00:00-23:59",
+      "checkinTime": "12:00",
+      "checkoutTime": "11:00"
+    }
+    </script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="pg-logo.png">
+    <link rel="apple-touch-icon" href="pg-logo.png">
+</head>
+<body>
+    <div class="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="pg-logo.png" alt="Comfort Stays PG Logo" class="logo-img">
+                    <h2>Comfort Stays PG</h2>
+                </div>
+                <div class="nav-menu">
+                    <a href="#home">Home</a>
+                    <a href="#amenities">Amenities</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#contact">Contact</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section id="home" class="hero">
+        <div class="hero-content">
+            <div class="hero-logo">
+                <img src="pg-logo.png" alt="Comfort Stays PG Logo" class="hero-logo-img">
+            </div>
+            <h1>Welcome to Comfort Stays PG</h1>
+            <p class="hero-subtitle">Premium Girls' Accommodation in Ahmedabad</p>
+                <p class="hero-description">
+                    Experience comfort, safety, and convenience in the heart of Ahmedabad. 
+                    Located near university areas with all modern amenities for a perfect stay.
+                </p>
+                <div class="hero-buttons">
+                    <a href="#contact" class="btn btn-primary">Book Now</a>
+                    <a href="#amenities" class="btn btn-secondary">View Amenities</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Amenities Section -->
+        <section id="amenities" class="amenities">
+            <div class="container">
+                <h2>Our Amenities</h2>
+                <div class="amenities-grid">
+                    <div class="amenity-card">
+                        <div class="amenity-icon">🏠</div>
+                        <h3>Room Options</h3>
+                        <p>AC and Non-AC rooms available to suit your preference and budget</p>
+                    </div>
+                    <div class="amenity-card">
+                        <div class="amenity-icon">🍽️</div>
+                        <h3>Meals Included</h3>
+                        <p>Delicious and nutritious meals provided for a comfortable stay</p>
+                    </div>
+                    <div class="amenity-card">
+                        <div class="amenity-icon">📶</div>
+                        <h3>Free WiFi</h3>
+                        <p>High-speed internet connectivity for work and entertainment</p>
+                    </div>
+                    <div class="amenity-card">
+                        <div class="amenity-icon">🚿</div>
+                        <h3>Water Heater</h3>
+                        <p>24/7 hot water facility for your comfort</p>
+                    </div>
+                    <div class="amenity-card">
+                        <div class="amenity-icon">📹</div>
+                        <h3>Security Cameras</h3>
+                        <p>Advanced security system with door cameras for your safety</p>
+                    </div>
+                    <div class="amenity-card">
+                        <div class="amenity-icon">📍</div>
+                        <h3>Prime Location</h3>
+                        <p>Strategically located near university areas and major landmarks</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing Section -->
+        <section id="pricing" class="pricing">
+            <div class="container">
+                <h2>Affordable Pricing</h2>
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <h3>Starting From</h3>
+                        <div class="price">₹6,500</div>
+                        <p class="price-period">per month</p>
+                        <ul class="price-features">
+                            <li>✓ All amenities included</li>
+                            <li>✓ Meals provided</li>
+                            <li>✓ Free WiFi</li>
+                            <li>✓ 24/7 security</li>
+                            <li>✓ Hot water facility</li>
+                        </ul>
+                    </div>
+                </div>
+                <p class="pricing-note">
+                    * Prices vary based on room type (AC/Non-AC) and specific requirements. 
+                    Contact us for detailed pricing information.
+                </p>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="contact">
+            <div class="container">
+                <h2>Get In Touch</h2>
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <div class="contact-icon">📍</div>
+                            <div>
+                                <h4>Address</h4>
+                                <p>Maharaja Palace, University Road, 120 Feet Ring Rd,<br>
+                                AEC Char Rasta, University Area,<br>
+                                Ahmedabad, Gujarat 380009</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">📞</div>
+                            <div>
+                                <h4>Phone</h4>
+                                <p><a href="tel:+917802004735">+91 7802004735</a></p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">✉️</div>
+                            <div>
+                                <h4>Email</h4>
+                                <p><a href="mailto:harshkanjariya.official@gmail.com">harshkanjariya.official@gmail.com</a></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-map">
+                        <iframe
+                            src="https://www.google.com/maps?q=23.040827975990204,72.54907747029554&hl=en&z=15&output=embed"
+                            width="100%"
+                            height="100%"
+                            style="border: 0; border-radius: 15px;"
+                            allowfullscreen
+                            loading="lazy"
+                            referrerpolicy="no-referrer-when-downgrade"
+                            title="Comfort Stays PG Location">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div class="footer-content">
+                    <div class="footer-section">
+                        <div class="footer-logo">
+                            <img src="pg-logo.png" alt="Comfort Stays PG Logo" class="footer-logo-img">
+                            <h3>Comfort Stays PG</h3>
+                        </div>
+                        <p>Your home away from home in Ahmedabad</p>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Quick Links</h4>
+                        <ul>
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#amenities">Amenities</a></li>
+                            <li><a href="#pricing">Pricing</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-section">
+                        <h4>Contact Info</h4>
+                        <p>📞 +91 7802004735</p>
+                        <p>✉️ harshkanjariya.official@gmail.com</p>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <p>&copy; 2024 Comfort Stays PG. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Smooth scrolling script -->
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
 </html>

@@ -1,6 +1,6 @@
 # GitHub Pages Deployment Guide
 
-This guide will help you deploy your Comfort Stays PG website to GitHub Pages for free hosting.
+This guide will help you deploy your Comfort Stays PG static website to GitHub Pages for free hosting.
 
 ## 🚀 Quick Setup Steps
 
@@ -21,7 +21,7 @@ git init
 git add .
 
 # Commit files
-git commit -m "Initial commit: Comfort Stays PG website"
+git commit -m "Initial commit: Comfort Stays PG static website"
 
 # Add GitHub remote (replace YOUR_USERNAME)
 git remote add origin https://github.com/YOUR_USERNAME/comfort-stays-pg.git
@@ -46,9 +46,9 @@ After deployment completes (usually 2-3 minutes):
 ## 🔄 Automatic Deployment
 
 Every time you push changes to the `main` branch:
-1. GitHub Actions automatically builds your website
-2. Deploys it to GitHub Pages
-3. Your website updates within 2-3 minutes
+1. GitHub Actions automatically deploys your static files
+2. No build process required - instant deployment!
+3. Your website updates within 1-2 minutes
 
 ## 📝 Making Updates
 
@@ -64,8 +64,8 @@ git push origin main
 ## ⚙️ Configuration
 
 The deployment is configured with:
-- **Build command**: `npm run build`
-- **Output directory**: `dist/`
+- **Static files**: Direct deployment of HTML/CSS files
+- **No build process**: Instant deployment
 - **Base URL**: `/comfort-stays-pg/` (matches your repo name)
 
 ## 🎯 Benefits of GitHub Pages
@@ -83,9 +83,9 @@ The deployment is configured with:
 1. Check the **Actions** tab in your GitHub repository
 2. Look for error messages in the workflow logs
 3. Common issues:
-   - Missing dependencies
-   - Build errors
-   - Permission issues
+   - File permission issues
+   - Missing files
+   - Repository settings
 
 ### If website doesn't load:
 1. Wait 5-10 minutes after first deployment
