@@ -108,6 +108,40 @@ body {
   width: 100%;
 }
 
+.nav-auth {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-auth #googleSignInButton {
+  display: flex;
+  align-items: center;
+}
+
+/* Mobile responsive for nav auth */
+@media (max-width: 768px) {
+  .nav-auth {
+    margin-top: 1rem;
+    justify-content: center;
+  }
+  
+  .nav-auth div {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .nav-auth button {
+    font-size: 11px !important;
+    padding: 6px 12px !important;
+  }
+  
+  .nav-auth span {
+    font-size: 12px !important;
+    text-align: center;
+  }
+}
+
 /* Hero Section */
 .hero {
   background: linear-gradient(135deg, #4169E1 0%, #1e40af 100%);

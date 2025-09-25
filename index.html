@@ -164,6 +164,9 @@
                     <a href="#pricing">Pricing</a>
                     <a href="#contact">Contact</a>
                 </div>
+                <div class="nav-auth">
+                    <div id="googleSignInButton"></div>
+                </div>
             </div>
         </nav>
 
@@ -329,6 +332,40 @@
         </footer>
     </div>
 
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvIaT8x5lKq6yA5YW8OUyn_uC_uJLeuZE",
+            authDomain: "comfort-stays.firebaseapp.com",
+            projectId: "comfort-stays",
+            storageBucket: "comfort-stays.firebasestorage.app",
+            messagingSenderId: "187885851533",
+            appId: "1:187885851533:web:5f82713f2ddd8fe889e3c4",
+            measurementId: "G-KYZ4HX31C9"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Make Firebase functions globally available
+        window.firebaseAuth = auth;
+        window.firebaseSignIn = signInWithPopup;
+        window.firebaseSignOut = signOut;
+        window.firebaseProvider = provider;
+        window.firebaseOnAuthStateChanged = onAuthStateChanged;
+        window.firebaseAnalytics = analytics;
+        window.firebaseLogEvent = logEvent;
+    </script>
+    
     <!-- Smooth scrolling script -->
     <script>
         // Smooth scrolling for anchor links
@@ -344,6 +381,320 @@
                 }
             });
         });
+
+        // Firebase Authentication functionality
+        let isOwnerSignedIn = false;
+        const ownerEmail = 'harshkanjariya.official@gmail.com';
+        let currentUser = null;
+
+        // Firebase Sign-in function
+        async function signInWithGoogle() {
+            try {
+                const result = await window.firebaseSignIn(window.firebaseAuth, window.firebaseProvider);
+                const user = result.user;
+                currentUser = user;
+                
+                console.log('Signed in user:', user.displayName, user.email);
+                
+                // Track sign-in event in analytics
+                if (window.firebaseAnalytics && window.firebaseLogEvent) {
+                    window.firebaseLogEvent(window.firebaseAnalytics, 'login', {
+                        method: 'google'
+                    });
+                }
+                
+                // Check if it's the owner's email
+                if (user.email === ownerEmail) {
+                    isOwnerSignedIn = true;
+                    showOwnerControls();
+                    showWelcomeMessage(user.displayName);
+                    
+                    // Track owner login
+                    if (window.firebaseAnalytics && window.firebaseLogEvent) {
+                        window.firebaseLogEvent(window.firebaseAnalytics, 'owner_login', {
+                            email: user.email
+                        });
+                    }
+                } else {
+                    showGuestMessage(user.displayName);
+                    
+                    // Track guest login
+                    if (window.firebaseAnalytics && window.firebaseLogEvent) {
+                        window.firebaseLogEvent(window.firebaseAnalytics, 'guest_login', {
+                            email: user.email
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Sign-in error:', error);
+                showErrorMessage('Sign-in failed. Please try again.');
+            }
+        }
+
+        // Firebase Sign-out function
+        async function signOutUser() {
+            try {
+                await window.firebaseSignOut(window.firebaseAuth);
+                currentUser = null;
+                isOwnerSignedIn = false;
+                
+                // No need to remove button container as it's now in navbar
+                
+                // Remove welcome message
+                const welcomeMsg = document.getElementById('welcomeMessage');
+                if (welcomeMsg) {
+                    welcomeMsg.remove();
+                }
+                
+                // Show sign-in button again
+                showSignInButton();
+                
+                // Track sign-out event
+                if (window.firebaseAnalytics && window.firebaseLogEvent) {
+                    window.firebaseLogEvent(window.firebaseAnalytics, 'logout');
+                }
+                
+            } catch (error) {
+                console.error('Sign-out error:', error);
+            }
+        }
+
+        function showOwnerControls() {
+            // Replace the sign-in button with owner controls in the navbar
+            const signInContainer = document.getElementById('googleSignInButton');
+            if (signInContainer) {
+                signInContainer.innerHTML = `
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <button id="manageButton" onclick="showManagePanel()" style="
+                            background: #4169E1;
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            box-shadow: 0 2px 8px rgba(65, 105, 225, 0.3);
+                            transition: all 0.3s ease;
+                            font-size: 12px;
+                        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(65, 105, 225, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(65, 105, 225, 0.3)'">
+                            🔧 Manage PG
+                        </button>
+                        <button id="signOutButton" onclick="signOutUser()" style="
+                            background: #dc3545;
+                            color: white;
+                            border: none;
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+                            transition: all 0.3s ease;
+                            font-size: 12px;
+                        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(220, 53, 69, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220, 53, 69, 0.3)'">
+                            🚪 Sign Out
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        function showManagePanel() {
+            window.location.href = 'manage.html';
+        }
+
+        function showWelcomeMessage(name) {
+            // Create welcome message
+            const welcomeDiv = document.createElement('div');
+            welcomeDiv.id = 'welcomeMessage';
+            welcomeDiv.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #4169E1, #1e40af);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    max-width: 300px;
+                    font-size: 14px;
+                ">
+                    <strong>Welcome, ${name}!</strong><br>
+                    <small>Owner Dashboard Active</small>
+                </div>
+            `;
+            document.body.appendChild(welcomeDiv);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (welcomeDiv.parentNode) {
+                    welcomeDiv.parentNode.removeChild(welcomeDiv);
+                }
+            }, 5000);
+        }
+
+        function showGuestMessage(name) {
+            // Replace sign-in button with guest controls
+            const signInContainer = document.getElementById('googleSignInButton');
+            if (signInContainer) {
+                signInContainer.innerHTML = `
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span style="color: #28a745; font-weight: 500; font-size: 14px;">
+                            👋 Welcome, ${name}!
+                        </span>
+                        <button onclick="signOutUser()" style="
+                            background: #dc3545;
+                            color: white;
+                            border: none;
+                            padding: 6px 12px;
+                            border-radius: 15px;
+                            font-weight: 500;
+                            cursor: pointer;
+                            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+                            transition: all 0.3s ease;
+                            font-size: 11px;
+                        " onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 4px 12px rgba(220, 53, 69, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(220, 53, 69, 0.3)'">
+                            🚪 Sign Out
+                        </button>
+                    </div>
+                `;
+            }
+
+            // Create guest message
+            const guestDiv = document.createElement('div');
+            guestDiv.id = 'guestMessage';
+            guestDiv.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #28a745, #20c997);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    max-width: 300px;
+                    font-size: 14px;
+                ">
+                    <strong>Welcome, ${name}!</strong><br>
+                    <small>Thanks for visiting Comfort Stays PG</small>
+                </div>
+            `;
+            document.body.appendChild(guestDiv);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (guestDiv.parentNode) {
+                    guestDiv.parentNode.removeChild(guestDiv);
+                }
+            }, 5000);
+        }
+
+        function showErrorMessage(message) {
+            // Create error message
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'errorMessage';
+            errorDiv.innerHTML = `
+                <div style="
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: linear-gradient(135deg, #dc3545, #c82333);
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    z-index: 1000;
+                    max-width: 300px;
+                    font-size: 14px;
+                ">
+                    <strong>⚠️ Error</strong><br>
+                    <small>${message}</small>
+                </div>
+            `;
+            document.body.appendChild(errorDiv);
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.parentNode.removeChild(errorDiv);
+                }
+            }, 5000);
+        }
+
+        function showSignInButton() {
+            const signInContainer = document.getElementById('googleSignInButton');
+            if (signInContainer) {
+                signInContainer.innerHTML = `
+                    <button onclick="signInWithGoogle()" style="
+                        background: #4285f4;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 5px;
+                        font-weight: 500;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        font-size: 14px;
+                        transition: all 0.3s ease;
+                    " onmouseover="this.style.background='#3367d6'" onmouseout="this.style.background='#4285f4'">
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Sign in with Google
+                    </button>
+                `;
+            }
+        }
+
+        // Initialize Firebase Authentication when page loads
+        window.onload = function () {
+            // Wait for Firebase to be ready
+            setTimeout(() => {
+                if (window.firebaseAuth && window.firebaseOnAuthStateChanged) {
+                    // Listen for authentication state changes
+                    window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
+                        if (user) {
+                            // User is signed in
+                            currentUser = user;
+                            console.log('User signed in:', user.displayName, user.email);
+                            
+                            // Check if it's the owner's email
+                            if (user.email === ownerEmail) {
+                                isOwnerSignedIn = true;
+                                showOwnerControls();
+                                showWelcomeMessage(user.displayName);
+                            } else {
+                                showGuestMessage(user.displayName);
+                            }
+                        } else {
+                            // User is signed out
+                            currentUser = null;
+                            isOwnerSignedIn = false;
+                            showSignInButton();
+                        }
+                    });
+                } else {
+                    console.error('Firebase not ready');
+                    showSignInButton();
+                }
+            }, 1000);
+
+            // Track page view in analytics
+            if (window.firebaseAnalytics && window.firebaseLogEvent) {
+                window.firebaseLogEvent(window.firebaseAnalytics, 'page_view', {
+                    page_title: 'Comfort Stays PG - Home',
+                    page_location: window.location.href
+                });
+            }
+        };
     </script>
 </body>
 </html>

@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage PG - Comfort Stays PG</title>
+    <link rel="stylesheet" href="manage-styles.css">
+    <link rel="icon" type="image/png" href="pg-logo.png">
+</head>
+<body>
+    <div class="manage-container">
+        <header class="manage-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <img src="pg-logo.png" alt="Comfort Stays PG Logo" class="logo-img">
+                    <h1>PG Management Dashboard</h1>
+                </div>
+                <div class="header-actions">
+                    <button onclick="goBack()" class="btn-secondary">← Back to Website</button>
+                    <button onclick="signOutUser()" class="btn-danger">🚪 Sign Out</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="manage-main">
+            <!-- Loading indicator -->
+            <div id="loadingIndicator" class="loading-indicator">
+                <div class="loading-spinner"></div>
+                <p>Checking authentication...</p>
+            </div>
+            
+            <div class="drag-instructions">
+                <span class="icon">🖱️</span>
+                <strong>Drag & Drop:</strong> Drag occupied beds to empty beds to move occupants between rooms. Perfect for temporary arrangements!
+            </div>
+            
+            <div class="apartment-layout" id="apartmentLayout" style="display: none;">
+                <div class="apartment-title">
+                    <h2>Comfort Stays PG - Apartment Layout</h2>
+                    <p>Click on beds to manage occupancy</p>
+                </div>
+                
+                <!-- Bed Status Legend -->
+                <div class="bed-legend">
+                    <div class="legend-item legend-empty">
+                        <div class="legend-dot"></div>
+                        <span>Available</span>
+                    </div>
+                    <div class="legend-item legend-permanent">
+                        <div class="legend-dot"></div>
+                        <span>Permanent</span>
+                    </div>
+                    <div class="legend-item legend-temporary">
+                        <div class="legend-dot"></div>
+                        <span>Temporary</span>
+                    </div>
+                    <div class="legend-item legend-extended">
+                        <div class="legend-dot"></div>
+                        <span>Extended Stay</span>
+                    </div>
+                </div>
+                
+                <div class="apartment-container">
+                    <!-- Left Half - Rooms -->
+                    <div class="left-half">
+                        <!-- Top Room (4 beds) -->
+                        <div class="room top-room">
+                            <div class="room-label">Room 1 (4 Beds)</div>
+                            <div class="beds-container">
+                                <div class="bed" data-room="room1" data-bed="1" onclick="handleBedClick(this)">
+                                    <div class="bed-number">1</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room1" data-bed="2" onclick="handleBedClick(this)">
+                                    <div class="bed-number">2</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room1" data-bed="3" onclick="handleBedClick(this)">
+                                    <div class="bed-number">3</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room1" data-bed="4" onclick="handleBedClick(this)">
+                                    <div class="bed-number">4</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Middle Room (3 beds) -->
+                        <div class="room middle-room">
+                            <div class="room-label">Room 2 (3 Beds)</div>
+                            <div class="beds-container">
+                                <div class="bed" data-room="room2" data-bed="1" onclick="handleBedClick(this)">
+                                    <div class="bed-number">1</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room2" data-bed="2" onclick="handleBedClick(this)">
+                                    <div class="bed-number">2</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room2" data-bed="3" onclick="handleBedClick(this)">
+                                    <div class="bed-number">3</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Room (4 beds) -->
+                        <div class="room bottom-room">
+                            <div class="room-label">Room 3 (4 Beds)</div>
+                            <div class="beds-container">
+                                <div class="bed" data-room="room3" data-bed="1" onclick="handleBedClick(this)">
+                                    <div class="bed-number">1</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room3" data-bed="2" onclick="handleBedClick(this)">
+                                    <div class="bed-number">2</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room3" data-bed="3" onclick="handleBedClick(this)">
+                                    <div class="bed-number">3</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                                <div class="bed" data-room="room3" data-bed="4" onclick="handleBedClick(this)">
+                                    <div class="bed-number">4</div>
+                                    <div class="bed-info">
+                                        <div class="occupant-name">Available</div>
+                                        <div class="bed-price">₹6,500</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Half - Balcony, Kitchen, Hall -->
+                    <div class="right-half">
+                        <!-- Balcony -->
+                        <div class="balcony">
+                            <div class="room-label">Balcony</div>
+                        </div>
+
+                        <!-- Kitchen -->
+                        <div class="kitchen">
+                            <div class="room-label">Kitchen</div>
+                        </div>
+
+                        <!-- Hall (6 beds) -->
+                        <div class="hall">
+                            <div class="room-label">Hall (6 Beds)</div>
+                            <div class="hall-beds">
+                                <!-- Kitchen side beds -->
+                                <div class="hall-side kitchen-side">
+                                    <div class="bed" data-room="hall" data-bed="1" onclick="handleBedClick(this)">
+                                        <div class="bed-number">1</div>
+                                        <div class="bed-info">
+                                            <div class="occupant-name">Available</div>
+                                            <div class="bed-price">₹6,500</div>
+                                        </div>
+                                    </div>
+                                    <div class="bed" data-room="hall" data-bed="2" onclick="handleBedClick(this)">
+                                        <div class="bed-number">2</div>
+                                        <div class="bed-info">
+                                            <div class="occupant-name">Available</div>
+                                            <div class="bed-price">₹6,500</div>
+                                        </div>
+                                    </div>
+                                    <div class="bed" data-room="hall" data-bed="3" onclick="handleBedClick(this)">
+                                        <div class="bed-number">3</div>
+                                        <div class="bed-info">
+                                            <div class="occupant-name">Available</div>
+                                            <div class="bed-price">₹6,500</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Left side beds -->
+                                <div class="hall-side left-side">
+                                    <div class="bed" data-room="hall" data-bed="4" onclick="handleBedClick(this)">
+                                        <div class="bed-number">4</div>
+                                        <div class="bed-info">
+                                            <div class="occupant-name">Available</div>
+                                            <div class="bed-price">₹6,500</div>
+                                        </div>
+                                    </div>
+                                    <div class="bed" data-room="hall" data-bed="5" onclick="handleBedClick(this)">
+                                        <div class="bed-number">5</div>
+                                        <div class="bed-info">
+                                            <div class="occupant-name">Available</div>
+                                            <div class="bed-price">₹6,500</div>
+                                        </div>
+                                    </div>
+                                    <div class="bed" data-room="hall" data-bed="6" onclick="handleBedClick(this)">
+                                        <div class="bed-number">6</div>
+                                        <div class="bed-info">
+                                            <div class="occupant-name">Available</div>
+                                            <div class="bed-price">₹6,500</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Door -->
+                            <div class="door">
+                                <div class="door-label">Main Door</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Timeline/Calendar Section -->
+    <div class="timeline-section">
+        <div class="timeline-header">
+            <h3>Bed Occupancy Timeline</h3>
+            <div class="date-range-selector">
+                <label for="startDate">From:</label>
+                <input type="date" id="startDate" name="startDate">
+                <label for="endDate">To:</label>
+                <input type="date" id="endDate" name="endDate">
+                <button onclick="updateTimeline()" class="btn-primary">Update Timeline</button>
+            </div>
+        </div>
+        
+        <div class="timeline-container">
+            <div class="timeline-legend">
+                <div class="legend-item">
+                    <div class="legend-dot permanent"></div>
+                    <span>Permanent</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot temporary"></div>
+                    <span>Temporary</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot extended"></div>
+                    <span>Extended Stay</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot empty"></div>
+                    <span>Available</span>
+                </div>
+            </div>
+            
+            <div class="timeline-content" id="timelineContent">
+                <!-- Timeline bars will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Bed Management Modal -->
+    <div id="bedModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Bed Management</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content will be dynamically loaded -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCvIaT8x5lKq6yA5YW8OUyn_uC_uJLeuZE",
+            authDomain: "comfort-stays.firebaseapp.com",
+            projectId: "comfort-stays",
+            storageBucket: "comfort-stays.firebasestorage.app",
+            messagingSenderId: "187885851533",
+            appId: "1:187885851533:web:5f82713f2ddd8fe889e3c4",
+            measurementId: "G-KYZ4HX31C9"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        window.firebaseDB = db;
+        window.firebaseAuth = auth;
+        window.firebaseSignOut = signOut;
+        window.firestoreCollection = collection;
+        window.firestoreDoc = doc;
+        window.firestoreGetDocs = getDocs;
+        window.firestoreSetDoc = setDoc;
+        window.firestoreUpdateDoc = updateDoc;
+        window.firestoreDeleteDoc = deleteDoc;
+    </script>
+
+    <script src="manage-script.js"></script>
+</body>
+</html>
