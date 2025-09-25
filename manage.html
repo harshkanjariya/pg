@@ -17,6 +17,7 @@
                 </div>
                 <div class="header-actions">
                     <button onclick="goBack()" class="btn-secondary">← Back to Website</button>
+                    <button onclick="window.location.href='transactions.html'" class="btn-primary">💳 Transactions</button>
                     <button onclick="signOutUser()" class="btn-danger">🚪 Sign Out</button>
                 </div>
             </div>
@@ -271,12 +272,25 @@
     <div class="timeline-section">
         <div class="timeline-header">
             <h3>Bed Occupancy Timeline</h3>
-            <div class="date-range-selector">
-                <label for="startDate">From:</label>
-                <input type="date" id="startDate" name="startDate">
-                <label for="endDate">To:</label>
-                <input type="date" id="endDate" name="endDate">
-                <button onclick="updateTimeline()" class="btn-primary">Update Timeline</button>
+            <div class="timeline-controls">
+                <div class="timeline-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="hidePermanentToggle" onchange="togglePermanentRows()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">Hide Full-Width Permanent</span>
+                </div>
+                <div class="timeline-navigation">
+                    <button onclick="navigateTimeline('prev')" class="btn-nav">← Previous Day</button>
+                    <div class="date-range-selector">
+                        <label for="startDate">From:</label>
+                        <input type="date" id="startDate" name="startDate">
+                        <label for="endDate">To:</label>
+                        <input type="date" id="endDate" name="endDate">
+                        <button onclick="updateTimeline()" class="btn-primary">Update Timeline</button>
+                    </div>
+                    <button onclick="navigateTimeline('next')" class="btn-nav">Next Day →</button>
+                </div>
             </div>
         </div>
         
@@ -319,37 +333,9 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCvIaT8x5lKq6yA5YW8OUyn_uC_uJLeuZE",
-            authDomain: "comfort-stays.firebaseapp.com",
-            projectId: "comfort-stays",
-            storageBucket: "comfort-stays.firebasestorage.app",
-            messagingSenderId: "187885851533",
-            appId: "1:187885851533:web:5f82713f2ddd8fe889e3c4",
-            measurementId: "G-KYZ4HX31C9"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-
-        window.firebaseDB = db;
-        window.firebaseAuth = auth;
-        window.firebaseSignOut = signOut;
-        window.firestoreCollection = collection;
-        window.firestoreDoc = doc;
-        window.firestoreGetDocs = getDocs;
-        window.firestoreSetDoc = setDoc;
-        window.firestoreUpdateDoc = updateDoc;
-        window.firestoreDeleteDoc = deleteDoc;
-    </script>
-
+    <!-- Shared Authentication Module -->
+    <script src="shared-auth.js"></script>
+    
     <script src="manage-script.js"></script>
 </body>
 </html>

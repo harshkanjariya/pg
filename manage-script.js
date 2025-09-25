@@ -3,73 +3,23 @@ let currentBed = null;
 let bedsData = {};
 
 // Initialize the page
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", async function() {
+    // Use shared authentication
+    const authSuccess = await window.initializeProtectedPage();
     
-    // Wait for Firebase to be ready
-    setTimeout(() => {
-        if (window.firebaseAuth) {
-            checkAuthentication();
-        } else {
-            console.error("Firebase Auth not ready after timeout");
-            document.getElementById('loadingIndicator').innerHTML = `
-                <div class="loading-spinner" style="border-top-color: #dc3545;"></div>
-                <p style="color: #dc3545;">Firebase not ready. Redirecting...</p>
-            `;
-            setTimeout(() => {
-                window.location.href = "index.html";
-            }, 2000);
-        }
-    }, 1000);
-    
-    // Initialize timeline with default date range
-    initializeTimeline();
-});
-
-// Check if user is authenticated
-async function checkAuthentication() {
-    try {
-        // Wait for auth state to be ready
-        await new Promise((resolve) => {
-            const unsubscribe = window.firebaseAuth.onAuthStateChanged((user) => {
-                unsubscribe();
-                resolve(user);
-            });
-        });
-        
-        const user = window.firebaseAuth.currentUser;
-        
-        if (!user) {
-            alert("Please sign in first. Redirecting to main page...");
-            window.location.href = "index.html";
-            return;
-        }
-        
-        if (user.email !== "harshkanjariya.official@gmail.com") {
-            alert("Access denied. Only the owner can access this page.");
-            window.location.href = "index.html";
-            return;
-        }
-        
-        // User is authenticated and authorized
-        
-        // Hide loading indicator and show apartment layout
-        document.getElementById('loadingIndicator').style.display = 'none';
-        document.getElementById('apartmentLayout').style.display = 'block';
-        document.getElementById('depositSummary').style.display = 'grid';
-        
-        loadBedsData();
-        
-    } catch (error) {
-        console.error("Authentication check failed:", error);
+    if (authSuccess) {
+        // Authentication successful, initialize timeline
+        initializeTimeline();
+    } else {
+        // Authentication failed, show error
         document.getElementById('loadingIndicator').innerHTML = `
             <div class="loading-spinner" style="border-top-color: #dc3545;"></div>
-            <p style="color: #dc3545;">Authentication error. Redirecting...</p>
+            <p style="color: #dc3545;">Authentication failed. Redirecting...</p>
         `;
-        setTimeout(() => {
-            window.location.href = "index.html";
-        }, 2000);
     }
-}
+});
+
+// Authentication is now handled by shared-auth.js
 
 // Check for automatic checkouts
 function checkAutomaticCheckouts() {
@@ -201,6 +151,14 @@ function initializeDefaultBeds() {
     const rooms = ["room1", "room2", "room3", "hall"];
     const bedCounts = { room1: 4, room2: 3, room3: 4, hall: 6 };
     
+    // Define correct room pricing
+    const roomPricing = {
+        room1: 8000, // Top room - 4 beds sharing
+        room2: 9000, // Middle room - 3 beds sharing
+        room3: 8000, // Bottom room - 4 beds sharing
+        hall: 6500   // Hall - 6 beds sharing
+    };
+    
     rooms.forEach(room => {
         for (let i = 1; i <= bedCounts[room]; i++) {
             const bedId = `${room}_bed${i}`;
@@ -212,7 +170,7 @@ function initializeDefaultBeds() {
                     occupantName: "",
                     occupantPhone: "",
                     occupantEmail: "",
-                    price: 6500,
+                    price: roomPricing[room], // Use correct room pricing
                     deposit: 0,
                     checkInDate: "",
                     checkOutDate: "",
@@ -272,10 +230,29 @@ function updateBedDisplay() {
     updateDepositSummary();
 }
 
+// Get default room price based on room type
+function getDefaultRoomPrice(room) {
+    const roomPricing = {
+        room1: 8000, // Top room - 4 beds sharing
+        room2: 9000, // Middle room - 3 beds sharing
+        room3: 8000, // Bottom room - 4 beds sharing
+        hall: 6500   // Hall - 6 beds sharing
+    };
+    return roomPricing[room] || 6500;
+}
+
 // Ensure all beds have data initialized
 function ensureAllBedsHaveData() {
     const rooms = ["room1", "room2", "room3", "hall"];
     const bedCounts = { room1: 4, room2: 3, room3: 4, hall: 6 };
+    
+    // Define correct room pricing
+    const roomPricing = {
+        room1: 8000, // Top room - 4 beds sharing
+        room2: 9000, // Middle room - 3 beds sharing
+        room3: 8000, // Bottom room - 4 beds sharing
+        hall: 6500   // Hall - 6 beds sharing
+    };
     
     rooms.forEach(room => {
         for (let i = 1; i <= bedCounts[room]; i++) {
@@ -288,12 +265,17 @@ function ensureAllBedsHaveData() {
                     occupantName: "",
                     occupantPhone: "",
                     occupantEmail: "",
-                    price: 6500,
+                    price: roomPricing[room], // Set correct default price
                     deposit: 0,
                     checkInDate: "",
                     checkOutDate: "",
                     notes: ""
                 };
+            } else {
+                // Only set default price for empty beds that don't have a price set
+                if (!bedsData[bedId].isOccupied && (!bedsData[bedId].price || bedsData[bedId].price === 0)) {
+                    bedsData[bedId].price = roomPricing[room];
+                }
             }
         }
     });
@@ -487,7 +469,7 @@ function showOccupantForm(bedData) {
             
             <div class="form-group">
                 <label for="price">Monthly Rent (₹) *</label>
-                <input type="number" id="price" name="price" value="${bedData.price || 6500}" required>
+                <input type="number" id="price" name="price" value="${bedData.price || getDefaultRoomPrice(bedData.room)}" required>
             </div>
             
             <div class="form-group">
@@ -748,15 +730,7 @@ function goBack() {
     window.location.href = "index.html";
 }
 
-// Sign out user
-async function signOutUser() {
-    try {
-        await window.firebaseSignOut(window.firebaseAuth);
-        window.location.href = "index.html";
-    } catch (error) {
-        console.error("Sign out error:", error);
-    }
-}
+// Sign out is now handled by shared-auth.js
 
 // Close modal when clicking outside
 window.onclick = function(event) {
@@ -879,9 +853,22 @@ function createTimelineRow(bedId, bedData, startDate, endDate) {
         bar.classList.add(status);
         
         if (status === 'permanent') {
-            // For permanent occupants, show full width but with lower opacity if there's history
+            // For permanent occupants, calculate position from check-in date and extend to end of timeline
             const hasHistory = window.bedHistoryMap && window.bedHistoryMap[bedKey] && window.bedHistoryMap[bedKey].length > 0;
-            bar.style.width = '100%';
+            
+            if (bedData.checkInDate) {
+                // Calculate position from check-in date
+                const position = calculateBarPosition(bedData.checkInDate, startDate, endDate);
+                // Calculate width from check-in date to end of timeline
+                const width = calculateBarWidth(bedData.checkInDate, endDate, startDate, endDate);
+                
+                bar.style.left = `${position}%`;
+                bar.style.width = `${width}%`;
+            } else {
+                // Fallback to full width if no check-in date
+                bar.style.width = '100%';
+            }
+            
             bar.style.opacity = hasHistory ? '0.8' : '1';
             bar.textContent = bedData.occupantName;
         } else if (bedData.checkInDate && bedData.checkOutDate) {
@@ -1347,4 +1334,248 @@ function updateDepositSummary() {
     
     document.getElementById('monthlyRevenue').textContent = `₹${totalMonthlyRevenue.toLocaleString()}`;
     document.getElementById('revenueDetails').textContent = 'from current occupants';
+}
+
+// Navigate timeline by day (smooth scrolling)
+function navigateTimeline(direction) {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    let startDate = new Date(startDateInput.value);
+    let endDate = new Date(endDateInput.value);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        // If no dates are set, use current month
+        const now = new Date();
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    }
+    
+    if (direction === 'prev') {
+        // Move back by 1 day
+        startDate.setDate(startDate.getDate() - 1);
+        endDate.setDate(endDate.getDate() - 1);
+    } else if (direction === 'next') {
+        // Move forward by 1 day
+        startDate.setDate(startDate.getDate() + 1);
+        endDate.setDate(endDate.getDate() + 1);
+    }
+    
+    // Update the date inputs smoothly
+    startDateInput.value = formatDateForInput(startDate);
+    endDateInput.value = formatDateForInput(endDate);
+    
+    // Update the timeline smoothly without page reload
+    updateTimelineSmooth();
+}
+
+// Format date for input field (YYYY-MM-DD)
+function formatDateForInput(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Smooth timeline update without page reload
+function updateTimelineSmooth() {
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    
+    if (!startDate || !endDate) {
+        return;
+    }
+    
+    // Update timeline bars smoothly without recreating the entire structure
+    updateTimelineBarsOnly(startDate, endDate);
+}
+
+// Update only the timeline bars without recreating the structure
+function updateTimelineBarsOnly(startDate, endDate) {
+    const timelineContent = document.getElementById('timelineContent');
+    if (!timelineContent) return;
+    
+    // Get all existing bed rows
+    const bedRows = timelineContent.querySelectorAll('.timeline-bed-row');
+    
+    bedRows.forEach(row => {
+        const barContainer = row.querySelector('.timeline-bar-container');
+        if (!barContainer) return;
+        
+        // Get bed ID from the row
+        const bedLabel = row.querySelector('.timeline-bed-label');
+        if (!bedLabel) return;
+        
+        const labelText = bedLabel.textContent;
+        const roomMatch = labelText.match(/(\w+) Bed (\d+)/);
+        if (!roomMatch) return;
+        
+        const room = roomMatch[1].toLowerCase();
+        const bedNumber = parseInt(roomMatch[2]);
+        const bedId = `${room}_bed${bedNumber}`;
+        
+        const bedData = bedsData[bedId];
+        if (!bedData) return;
+        
+        // Clear existing bars
+        barContainer.innerHTML = '';
+        
+        // Add historical bars first
+        if (window.bedHistoryMap && window.bedHistoryMap[bedId]) {
+            window.bedHistoryMap[bedId].forEach(historyEntry => {
+                const historyBar = createHistoryBar(historyEntry, startDate, endDate);
+                barContainer.appendChild(historyBar);
+            });
+        }
+        
+        // Create current timeline bar
+        const bar = document.createElement('div');
+        bar.className = 'timeline-bar';
+        
+        if (bedData.isOccupied) {
+            const status = getBedStatus(bedData);
+            bar.classList.add(status);
+            
+            if (status === 'permanent') {
+                const hasHistory = window.bedHistoryMap && window.bedHistoryMap[bedId] && window.bedHistoryMap[bedId].length > 0;
+                
+                if (bedData.checkInDate) {
+                    const position = calculateBarPosition(bedData.checkInDate, startDate, endDate);
+                    const width = calculateBarWidth(bedData.checkInDate, endDate, startDate, endDate);
+                    
+                    bar.style.left = `${position}%`;
+                    bar.style.width = `${width}%`;
+                } else {
+                    bar.style.width = '100%';
+                }
+                
+                bar.style.opacity = hasHistory ? '0.8' : '1';
+                bar.textContent = bedData.occupantName;
+            } else if (bedData.checkInDate && bedData.checkOutDate) {
+                const position = calculateBarPosition(bedData.checkInDate, startDate, endDate);
+                const width = calculateBarWidth(bedData.checkInDate, bedData.checkOutDate, startDate, endDate);
+                
+                bar.style.left = `${position}%`;
+                bar.style.width = `${width}%`;
+                bar.textContent = bedData.occupantName;
+            }
+            
+            // Add click handler
+            bar.onclick = () => {
+                currentBed = bedId;
+                showOccupantDialog(bedData);
+            };
+        } else {
+            bar.classList.add('empty');
+            
+            if (window.bedHistoryMap && window.bedHistoryMap[bedId] && window.bedHistoryMap[bedId].length > 0) {
+                createAvailablePeriods(barContainer, startDate, endDate, window.bedHistoryMap[bedId]);
+            } else {
+                bar.style.width = '100%';
+                bar.textContent = 'Available';
+                barContainer.appendChild(bar);
+            }
+        }
+        
+        // Only append bar if it was added (not for beds with history)
+        if (bar.parentNode === null) {
+            barContainer.appendChild(bar);
+        }
+        
+        // Apply toggle state
+        const toggle = document.getElementById('hidePermanentToggle');
+        if (toggle && toggle.checked) {
+            // Hide permanent occupants that span the full width of current visible timeline
+            if (bedData.isOccupied && getBedStatus(bedData) === 'permanent') {
+                const isFullWidth = isPermanentFullWidth(bedData, startDate, endDate);
+                if (isFullWidth) {
+                    row.classList.add('hidden-permanent');
+                } else {
+                    row.classList.remove('hidden-permanent');
+                }
+            } else {
+                row.classList.remove('hidden-permanent');
+            }
+        } else {
+            // Show all rows
+            row.classList.remove('hidden-permanent');
+        }
+    });
+    
+    // Update date marks smoothly
+    updateDateMarks(startDate, endDate);
+}
+
+// Check if a permanent occupant spans the full width of the current timeline
+function isPermanentFullWidth(bedData, startDate, endDate) {
+    if (!bedData.isOccupied || getBedStatus(bedData) !== 'permanent') {
+        return false;
+    }
+    
+    // If no check-in date, it spans full width
+    if (!bedData.checkInDate) {
+        return true;
+    }
+    
+    // Convert dates to Date objects for comparison
+    const timelineStart = new Date(startDate);
+    const timelineEnd = new Date(endDate);
+    const checkInDate = new Date(bedData.checkInDate);
+    
+    // If check-in date is before or at the start of timeline, it spans full width
+    return checkInDate <= timelineStart;
+}
+
+// Toggle permanent occupant rows visibility
+function togglePermanentRows() {
+    const toggle = document.getElementById('hidePermanentToggle');
+    const timelineContent = document.getElementById('timelineContent');
+    
+    if (!timelineContent) return;
+    
+    // Get current timeline dates
+    const startDateInput = document.getElementById('startDate');
+    const endDateInput = document.getElementById('endDate');
+    const startDate = startDateInput.value;
+    const endDate = endDateInput.value;
+    
+    if (!startDate || !endDate) return;
+    
+    const bedRows = timelineContent.querySelectorAll('.timeline-bed-row');
+    
+    bedRows.forEach(row => {
+        const bedLabel = row.querySelector('.timeline-bed-label');
+        if (!bedLabel) return;
+        
+        const labelText = bedLabel.textContent;
+        const roomMatch = labelText.match(/(\w+) Bed (\d+)/);
+        if (!roomMatch) return;
+        
+        const room = roomMatch[1].toLowerCase();
+        const bedNumber = parseInt(roomMatch[2]);
+        const bedId = `${room}_bed${bedNumber}`;
+        
+        const bedData = bedsData[bedId];
+        if (!bedData) return;
+        
+        if (toggle.checked) {
+            // Hide permanent occupants that span the full width of current timeline
+            if (bedData.isOccupied && getBedStatus(bedData) === 'permanent') {
+                const isFullWidth = isPermanentFullWidth(bedData, startDate, endDate);
+                if (isFullWidth) {
+                    row.classList.add('hidden-permanent');
+                } else {
+                    row.classList.remove('hidden-permanent');
+                }
+            } else {
+                row.classList.remove('hidden-permanent');
+            }
+        } else {
+            // Show all rows
+            row.classList.remove('hidden-permanent');
+        }
+    });
 }

@@ -332,39 +332,8 @@
         </footer>
     </div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAnalytics, logEvent } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCvIaT8x5lKq6yA5YW8OUyn_uC_uJLeuZE",
-            authDomain: "comfort-stays.firebaseapp.com",
-            projectId: "comfort-stays",
-            storageBucket: "comfort-stays.firebasestorage.app",
-            messagingSenderId: "187885851533",
-            appId: "1:187885851533:web:5f82713f2ddd8fe889e3c4",
-            measurementId: "G-KYZ4HX31C9"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
-
-        // Make Firebase functions globally available
-        window.firebaseAuth = auth;
-        window.firebaseSignIn = signInWithPopup;
-        window.firebaseSignOut = signOut;
-        window.firebaseProvider = provider;
-        window.firebaseOnAuthStateChanged = onAuthStateChanged;
-        window.firebaseAnalytics = analytics;
-        window.firebaseLogEvent = logEvent;
-    </script>
+    <!-- Shared Authentication Module -->
+    <script src="shared-auth.js"></script>
     
     <!-- Smooth scrolling script -->
     <script>
@@ -654,46 +623,10 @@
             }
         }
 
-        // Initialize Firebase Authentication when page loads
-        window.onload = function () {
-            // Wait for Firebase to be ready
-            setTimeout(() => {
-                if (window.firebaseAuth && window.firebaseOnAuthStateChanged) {
-                    // Listen for authentication state changes
-                    window.firebaseOnAuthStateChanged(window.firebaseAuth, (user) => {
-                        if (user) {
-                            // User is signed in
-                            currentUser = user;
-                            console.log('User signed in:', user.displayName, user.email);
-                            
-                            // Check if it's the owner's email
-                            if (user.email === ownerEmail) {
-                                isOwnerSignedIn = true;
-                                showOwnerControls();
-                                showWelcomeMessage(user.displayName);
-                            } else {
-                                showGuestMessage(user.displayName);
-                            }
-                        } else {
-                            // User is signed out
-                            currentUser = null;
-                            isOwnerSignedIn = false;
-                            showSignInButton();
-                        }
-                    });
-                } else {
-                    console.error('Firebase not ready');
-                    showSignInButton();
-                }
-            }, 1000);
-
-            // Track page view in analytics
-            if (window.firebaseAnalytics && window.firebaseLogEvent) {
-                window.firebaseLogEvent(window.firebaseAnalytics, 'page_view', {
-                    page_title: 'Comfort Stays PG - Home',
-                    page_location: window.location.href
-                });
-            }
+        // Initialize authentication when page loads
+        window.onload = async function () {
+            // Use shared authentication
+            await window.initializeLandingPage();
         };
     </script>
 </body>

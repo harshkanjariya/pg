@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - Comfort Stays PG</title>
+    <link rel="stylesheet" href="transactions-styles.css">
+    <link rel="icon" type="image/png" href="pg-logo.png">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>💳 Transactions Dashboard</h1>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="window.location.href='manage.html'">Back to Management</button>
+                    <button class="btn-danger" onclick="signOutUser()">Sign Out</button>
+                </div>
+            </div>
+        </header>
+
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="loading-spinner"></div>
+            <p>Checking authentication...</p>
+        </div>
+        
+        <!-- Transaction Summary -->
+        <div class="deposit-summary" id="transactionSummary" style="display: grid !important; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important; gap: 24px !important; margin-bottom: 32px !important; padding: 0 16px !important; width: 100% !important; max-width: 1200px !important; margin-left: auto !important; margin-right: auto !important;">
+            <div class="summary-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid rgba(239, 68, 68, 0.2) !important; border-radius: 16px !important; padding: 24px !important; display: flex !important; align-items: center !important; gap: 20px !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important; position: relative !important; overflow: hidden !important; min-height: 120px !important;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #ef4444, #dc2626);"></div>
+                <div class="summary-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: white !important; width: 70px !important; height: 70px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 16px !important; font-size: 28px !important; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important; flex-shrink: 0 !important;">💸</div>
+                <div class="summary-content" style="flex: 1 !important;">
+                    <h3 style="margin: 0 0 8px 0 !important; font-size: 12px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 1px !important;">Monthly Expenses</h3>
+                    <div class="summary-amount" id="totalExpenses" style="font-size: 28px !important; font-weight: 800 !important; color: #1e293b !important; margin-bottom: 4px !important; line-height: 1 !important; background: linear-gradient(135deg, #1e293b, #ef4444) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important;">₹0</div>
+                    <div class="summary-details" id="expenseDetails" style="font-size: 13px !important; color: #64748b !important; font-weight: 500 !important; opacity: 0.8 !important;">utilities, maintenance, etc.</div>
+                </div>
+            </div>
+            
+            <div class="summary-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid rgba(16, 185, 129, 0.2) !important; border-radius: 16px !important; padding: 24px !important; display: flex !important; align-items: center !important; gap: 20px !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important; position: relative !important; overflow: hidden !important; min-height: 120px !important;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #10b981, #059669);"></div>
+                <div class="summary-icon" style="background: linear-gradient(135deg, #10b981, #059669) !important; color: white !important; width: 70px !important; height: 70px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 16px !important; font-size: 28px !important; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important; flex-shrink: 0 !important;">💰</div>
+                <div class="summary-content" style="flex: 1 !important;">
+                    <h3 style="margin: 0 0 8px 0 !important; font-size: 12px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 1px !important;">Collections</h3>
+                    <div class="summary-amount" id="totalCollections" style="font-size: 28px !important; font-weight: 800 !important; color: #1e293b !important; margin-bottom: 4px !important; line-height: 1 !important; background: linear-gradient(135deg, #1e293b, #10b981) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important;">₹0</div>
+                    <div class="summary-details" id="collectionDetails" style="font-size: 13px !important; color: #64748b !important; font-weight: 500 !important; opacity: 0.8 !important;">rent + deposits collected</div>
+                </div>
+            </div>
+            
+            <div class="summary-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-radius: 16px !important; padding: 24px !important; display: flex !important; align-items: center !important; gap: 20px !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important; position: relative !important; overflow: hidden !important; min-height: 120px !important;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #f59e0b, #d97706);"></div>
+                <div class="summary-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: white !important; width: 70px !important; height: 70px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 16px !important; font-size: 28px !important; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important; flex-shrink: 0 !important;">⏳</div>
+                <div class="summary-content" style="flex: 1 !important;">
+                    <h3 style="margin: 0 0 8px 0 !important; font-size: 12px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 1px !important;">Pending Amount</h3>
+                    <div class="summary-amount" id="pendingAmount" style="font-size: 28px !important; font-weight: 800 !important; color: #1e293b !important; margin-bottom: 4px !important; line-height: 1 !important; background: linear-gradient(135deg, #1e293b, #f59e0b) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important;">₹0</div>
+                    <div class="summary-details" id="pendingDetails" style="font-size: 13px !important; color: #64748b !important; font-weight: 500 !important; opacity: 0.8 !important;">unpaid rent & deposits</div>
+                </div>
+            </div>
+            
+            <div class="summary-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid rgba(139, 92, 246, 0.2) !important; border-radius: 16px !important; padding: 24px !important; display: flex !important; align-items: center !important; gap: 20px !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important; position: relative !important; overflow: hidden !important; min-height: 120px !important;">
+                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #8b5cf6, #7c3aed);"></div>
+                <div class="summary-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; color: white !important; width: 70px !important; height: 70px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 16px !important; font-size: 28px !important; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important; flex-shrink: 0 !important;">📊</div>
+                <div class="summary-content" style="flex: 1 !important;">
+                    <h3 style="margin: 0 0 8px 0 !important; font-size: 12px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 1px !important;">Capacity</h3>
+                    <div class="summary-amount" id="capacityInfo" style="font-size: 28px !important; font-weight: 800 !important; color: #1e293b !important; margin-bottom: 4px !important; line-height: 1 !important; background: linear-gradient(135deg, #1e293b, #8b5cf6) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important;">0/17</div>
+                    <div class="summary-details" id="capacityDetails" style="font-size: 13px !important; color: #64748b !important; font-weight: 500 !important; opacity: 0.8 !important;">beds available this month</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="transaction-section">
+            <div class="section-header">
+                <h2>📋 Transaction History</h2>
+                <div class="transaction-filters">
+                    <select id="transactionType" onchange="filterTransactions()">
+                        <option value="all">All Transactions</option>
+                        <option value="collection">Collection</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                    <input type="date" id="startDate" onchange="filterTransactions()">
+                    <input type="date" id="endDate" onchange="filterTransactions()">
+                    <button onclick="addTransaction()" class="btn-primary">Add Transaction</button>
+                </div>
+            </div>
+            
+            <div class="transaction-list" id="transactionList">
+                <!-- Transactions will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Authentication Module -->
+    <script src="shared-auth.js"></script>
+    
+    <script src="transactions-script.js"></script>
+</body>
+</html>
