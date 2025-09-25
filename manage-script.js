@@ -55,6 +55,7 @@ async function checkAuthentication() {
         // Hide loading indicator and show apartment layout
         document.getElementById('loadingIndicator').style.display = 'none';
         document.getElementById('apartmentLayout').style.display = 'block';
+        document.getElementById('depositSummary').style.display = 'grid';
         
         loadBedsData();
         
@@ -266,6 +267,9 @@ function updateBedDisplay() {
     
     // Initialize drag and drop event listeners
     initializeDragAndDrop();
+    
+    // Update deposit summary
+    updateDepositSummary();
 }
 
 // Ensure all beds have data initialized
@@ -857,7 +861,16 @@ function createTimelineRow(bedId, bedData, startDate, endDate) {
     const barContainer = document.createElement('div');
     barContainer.className = 'timeline-bar-container';
     
-    // Create timeline bar
+    // Add historical bars first (so they appear behind current bars)
+    const bedKey = bedId;
+    if (window.bedHistoryMap && window.bedHistoryMap[bedKey]) {
+        window.bedHistoryMap[bedKey].forEach(historyEntry => {
+            const historyBar = createHistoryBar(historyEntry, startDate, endDate);
+            barContainer.appendChild(historyBar);
+        });
+    }
+    
+    // Create current timeline bar
     const bar = document.createElement('div');
     bar.className = 'timeline-bar';
     
@@ -866,8 +879,10 @@ function createTimelineRow(bedId, bedData, startDate, endDate) {
         bar.classList.add(status);
         
         if (status === 'permanent') {
-            // Full width for permanent occupants
+            // For permanent occupants, show full width but with lower opacity if there's history
+            const hasHistory = window.bedHistoryMap && window.bedHistoryMap[bedKey] && window.bedHistoryMap[bedKey].length > 0;
             bar.style.width = '100%';
+            bar.style.opacity = hasHistory ? '0.8' : '1';
             bar.textContent = bedData.occupantName;
         } else if (bedData.checkInDate && bedData.checkOutDate) {
             // Calculate position and width based on dates
@@ -885,15 +900,98 @@ function createTimelineRow(bedId, bedData, startDate, endDate) {
             showOccupantDialog(bedData);
         };
     } else {
-        // Empty bed - full width green
+        // Empty bed - show as available period, not full width
         bar.classList.add('empty');
-        bar.style.width = '100%';
-        bar.textContent = 'Available';
+        
+        // If there's history, show available periods between historical entries
+        if (window.bedHistoryMap && window.bedHistoryMap[bedKey] && window.bedHistoryMap[bedKey].length > 0) {
+            // Show available periods between historical entries
+            createAvailablePeriods(barContainer, startDate, endDate, window.bedHistoryMap[bedKey]);
+            // Don't add the empty bar since we have available periods
+        } else {
+            // No history, show full width available
+            bar.style.width = '100%';
+            bar.textContent = 'Available';
+            barContainer.appendChild(bar);
+        }
     }
     
-    barContainer.appendChild(bar);
+    // Only append bar if it was added (not for beds with history)
+    if (bar.parentNode === barContainer) {
+        // Bar was already appended
+    } else if (!window.bedHistoryMap || !window.bedHistoryMap[bedKey] || window.bedHistoryMap[bedKey].length === 0) {
+        // Only append if no history (for empty beds without history)
+        barContainer.appendChild(bar);
+    }
+    
     row.appendChild(barContainer);
     timelineContent.appendChild(row);
+}
+
+function createAvailablePeriods(barContainer, startDate, endDate, historyEntries) {
+    // Sort history entries by check-in date
+    const sortedEntries = historyEntries.sort((a, b) => new Date(a.checkInDate) - new Date(b.checkInDate));
+    
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Create available periods
+    let currentDate = start;
+    
+    sortedEntries.forEach((entry, index) => {
+        const entryStart = new Date(entry.checkInDate);
+        const entryEnd = new Date(entry.actualCheckoutDate || entry.checkOutDate);
+        
+        // If there's a gap before this entry, create an available period
+        if (currentDate < entryStart) {
+            const availableBar = document.createElement('div');
+            availableBar.className = 'timeline-bar available-period';
+            availableBar.style.left = `${calculateBarPosition(formatDate(currentDate), startDate, endDate)}%`;
+            availableBar.style.width = `${calculateBarWidth(formatDate(currentDate), formatDate(entryStart), startDate, endDate)}%`;
+            availableBar.textContent = 'Available';
+            availableBar.onclick = () => {
+                // Could show available period details
+                console.log('Available period clicked');
+            };
+            barContainer.appendChild(availableBar);
+        }
+        
+        // Update current date to after this entry
+        currentDate = new Date(Math.max(currentDate.getTime(), entryEnd.getTime()));
+    });
+    
+    // If there's a gap after the last entry, create an available period
+    if (currentDate < end) {
+        const availableBar = document.createElement('div');
+        availableBar.className = 'timeline-bar available-period';
+        availableBar.style.left = `${calculateBarPosition(formatDate(currentDate), startDate, endDate)}%`;
+        availableBar.style.width = `${calculateBarWidth(formatDate(currentDate), formatDate(end), startDate, endDate)}%`;
+        availableBar.textContent = 'Available';
+        availableBar.onclick = () => {
+            console.log('Available period clicked');
+        };
+        barContainer.appendChild(availableBar);
+    }
+}
+
+function createHistoryBar(historyEntry, startDate, endDate) {
+    const bar = document.createElement('div');
+    bar.className = 'timeline-bar history-bar';
+    
+    // Calculate position and width based on dates
+    const position = calculateBarPosition(historyEntry.checkInDate, startDate, endDate);
+    const width = calculateBarWidth(historyEntry.checkInDate, historyEntry.actualCheckoutDate || historyEntry.checkOutDate, startDate, endDate);
+    
+    bar.style.left = `${position}%`;
+    bar.style.width = `${width}%`;
+    bar.textContent = historyEntry.occupantName;
+    
+    // Add click handler to show historical details
+    bar.onclick = () => {
+        showHistoryDialog(historyEntry);
+    };
+    
+    return bar;
 }
 
 function calculateBarPosition(checkInDate, startDate, endDate) {
@@ -930,12 +1028,16 @@ function calculateBarWidth(checkInDate, checkOutDate, startDate, endDate) {
 
 async function loadAndDisplayHistory(startDate, endDate) {
     try {
+        console.log("Loading history data...");
         const historyRef = window.firestoreCollection(window.firebaseDB, "history");
         const snapshot = await window.firestoreGetDocs(historyRef);
+        
+        console.log("History snapshot size:", snapshot.size);
         
         const historyData = {};
         snapshot.forEach((doc) => {
             const data = doc.data();
+            console.log("History entry:", data);
             const bedKey = `${data.room}_bed${data.bedNumber}`;
             
             if (!historyData[bedKey]) {
@@ -943,6 +1045,8 @@ async function loadAndDisplayHistory(startDate, endDate) {
             }
             historyData[bedKey].push(data);
         });
+        
+        console.log("Processed history data:", historyData);
         
         // Display historical data on timeline
         displayHistoryOnTimeline(historyData, startDate, endDate);
@@ -953,18 +1057,33 @@ async function loadAndDisplayHistory(startDate, endDate) {
 }
 
 function displayHistoryOnTimeline(historyData, startDate, endDate) {
-    const timelineContent = document.getElementById('timelineContent');
+    console.log("Displaying history on timeline:", historyData, "Date range:", startDate, "to", endDate);
+    
+    // Create a map to store history bars for each bed
+    const bedHistoryMap = {};
     
     Object.keys(historyData).forEach(bedKey => {
         const historyEntries = historyData[bedKey];
+        console.log(`Processing ${bedKey} with ${historyEntries.length} entries`);
         
         historyEntries.forEach(entry => {
+            console.log("Checking entry:", entry);
             // Check if this historical entry overlaps with the selected date range
             if (isDateInRange(entry.checkInDate, entry.actualCheckoutDate || entry.checkOutDate, startDate, endDate)) {
-                createHistoryTimelineRow(entry, startDate, endDate);
+                console.log("Entry is in range, adding to bed history map");
+                
+                if (!bedHistoryMap[bedKey]) {
+                    bedHistoryMap[bedKey] = [];
+                }
+                bedHistoryMap[bedKey].push(entry);
+            } else {
+                console.log("Entry is not in range");
             }
         });
     });
+    
+    // Store the history data globally so it can be used when creating timeline rows
+    window.bedHistoryMap = bedHistoryMap;
 }
 
 function isDateInRange(checkInDate, checkOutDate, rangeStart, rangeEnd) {
@@ -973,46 +1092,14 @@ function isDateInRange(checkInDate, checkOutDate, rangeStart, rangeEnd) {
     const start = new Date(rangeStart);
     const end = new Date(rangeEnd);
     
+    console.log(`Date range check: ${checkInDate} to ${checkOutDate} vs ${rangeStart} to ${rangeEnd}`);
+    console.log(`Parsed dates: ${checkIn} to ${checkOut} vs ${start} to ${end}`);
+    
     // Check if the stay period overlaps with the selected range
-    return (checkIn <= end && checkOut >= start);
-}
-
-function createHistoryTimelineRow(historyEntry, startDate, endDate) {
-    const timelineContent = document.getElementById('timelineContent');
+    const overlaps = (checkIn <= end && checkOut >= start);
+    console.log(`Overlaps: ${overlaps}`);
     
-    const row = document.createElement('div');
-    row.className = 'timeline-bed-row history-row';
-    
-    // Bed label with history indicator
-    const label = document.createElement('div');
-    label.className = 'timeline-bed-label';
-    label.textContent = `${historyEntry.room.charAt(0).toUpperCase() + historyEntry.room.slice(1)} Bed ${historyEntry.bedNumber} (Past)`;
-    row.appendChild(label);
-    
-    // Timeline bar container
-    const barContainer = document.createElement('div');
-    barContainer.className = 'timeline-bar-container';
-    
-    // Create timeline bar for historical data
-    const bar = document.createElement('div');
-    bar.className = 'timeline-bar history-bar';
-    
-    // Calculate position and width based on dates
-    const position = calculateBarPosition(historyEntry.checkInDate, startDate, endDate);
-    const width = calculateBarWidth(historyEntry.checkInDate, historyEntry.actualCheckoutDate || historyEntry.checkOutDate, startDate, endDate);
-    
-    bar.style.left = `${position}%`;
-    bar.style.width = `${width}%`;
-    bar.textContent = historyEntry.occupantName;
-    
-    // Add click handler to show historical details
-    bar.onclick = () => {
-        showHistoryDialog(historyEntry);
-    };
-    
-    barContainer.appendChild(bar);
-    row.appendChild(barContainer);
-    timelineContent.appendChild(row);
+    return overlaps;
 }
 
 function showHistoryDialog(historyEntry) {
@@ -1227,4 +1314,37 @@ async function moveOccupant(sourceBedId, targetBedId) {
         console.error("Error moving occupant:", error);
         alert("Error moving occupant. Please try again.");
     }
+}
+
+// Deposit Summary Functions
+function updateDepositSummary() {
+    let totalDeposits = 0;
+    let occupantsWithDeposits = 0;
+    let occupiedBeds = 0;
+    let totalMonthlyRevenue = 0;
+    
+    // Calculate totals from current beds data
+    Object.keys(bedsData).forEach(bedId => {
+        const bedData = bedsData[bedId];
+        
+        if (bedData.isOccupied) {
+            occupiedBeds++;
+            totalMonthlyRevenue += bedData.price || 0;
+            
+            if (bedData.deposit && bedData.deposit > 0) {
+                totalDeposits += bedData.deposit;
+                occupantsWithDeposits++;
+            }
+        }
+    });
+    
+    // Update the UI
+    document.getElementById('totalDeposits').textContent = `₹${totalDeposits.toLocaleString()}`;
+    document.getElementById('depositDetails').textContent = `${occupantsWithDeposits} occupants with deposits`;
+    
+    document.getElementById('occupancyCount').textContent = `${occupiedBeds}/17`;
+    document.getElementById('occupancyDetails').textContent = 'beds occupied';
+    
+    document.getElementById('monthlyRevenue').textContent = `₹${totalMonthlyRevenue.toLocaleString()}`;
+    document.getElementById('revenueDetails').textContent = 'from current occupants';
 }

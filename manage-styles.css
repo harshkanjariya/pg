@@ -768,16 +768,6 @@ body {
     flex-shrink: 0;
 }
 
-.timeline-bar-container {
-    flex: 1;
-    height: 30px;
-    background: #f1f5f9;
-    border-radius: 15px;
-    position: relative;
-    margin-left: 1rem;
-    overflow: hidden;
-}
-
 .timeline-bar {
     height: 100%;
     border-radius: 15px;
@@ -817,10 +807,45 @@ body {
     width: 100%;
 }
 
+.timeline-bar-container {
+    flex: 1;
+    height: 30px;
+    background: #f1f5f9;
+    border-radius: 15px;
+    position: relative;
+    margin-left: 1rem;
+    overflow: hidden;
+}
+
+.timeline-bar {
+    height: 100%;
+    border-radius: 15px;
+    position: absolute;
+    top: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 1;
+}
+
 .timeline-bar.history-bar {
     background: linear-gradient(135deg, #9ca3af, #6b7280);
     opacity: 0.7;
     border: 1px solid #4b5563;
+    z-index: 0;
+}
+
+.timeline-bar.available-period {
+    background: linear-gradient(135deg, #86efac, #22c55e);
+    opacity: 0.6;
+    border: 1px dashed #16a34a;
+    z-index: 0;
 }
 
 .timeline-bed-row.history-row {
@@ -925,6 +950,145 @@ body {
     font-size: 16px;
 }
 
+/* Deposit Summary Styles */
+.deposit-summary {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)) !important;
+    gap: 1.5rem !important;
+    margin-bottom: 2rem !important;
+    padding: 0 1rem !important;
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    background: red !important; /* TEST - This should make the container red */
+}
+
+.summary-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-radius: 16px !important;
+    padding: 2rem !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+    border: 5px solid blue !important; /* TEST - This should make cards have blue borders */
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+    min-height: 120px !important;
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4169E1, #1e40af, #3b82f6);
+}
+
+.summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(65, 105, 225, 0.15);
+    border-color: rgba(65, 105, 225, 0.2);
+}
+
+.summary-icon {
+    font-size: 2.5rem !important;
+    width: 70px !important;
+    height: 70px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: linear-gradient(135deg, #4169E1, #1e40af) !important;
+    border-radius: 16px !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(65, 105, 225, 0.3) !important;
+    flex-shrink: 0 !important;
+}
+
+.summary-content {
+    flex: 1 !important;
+}
+
+.summary-content h3 {
+    margin: 0 0 0.75rem 0 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+.summary-amount {
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    color: #1e293b !important;
+    margin-bottom: 0.5rem !important;
+    line-height: 1 !important;
+    background: linear-gradient(135deg, #1e293b, #4169E1) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+}
+
+.summary-details {
+    font-size: 13px !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+    opacity: 0.8 !important;
+}
+
+/* Special styling for different card types */
+.summary-card:nth-child(1) .summary-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important;
+}
+
+.summary-card:nth-child(2) .summary-icon {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.summary-card:nth-child(3) .summary-icon {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important;
+}
+
+/* Mobile responsive for deposit summary */
+@media (max-width: 768px) {
+    .deposit-summary {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        padding: 0 0.5rem;
+    }
+    
+    .summary-card {
+        padding: 1.5rem;
+        gap: 1rem;
+    }
+    
+    .summary-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+    
+    .summary-amount {
+        font-size: 1.8rem;
+    }
+    
+    .summary-content h3 {
+        font-size: 12px;
+    }
+    
+    .summary-details {
+        font-size: 12px;
+    }
+}
+
 /* Mobile drag and drop adjustments */
 @media (max-width: 768px) {
     .bed.draggable {
@@ -938,4 +1102,5 @@ body {
     .bed.drag-over {
         transform: scale(1.02);
     }
+}
 }
