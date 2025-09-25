@@ -46,16 +46,6 @@
                 </div>
             </div>
             
-            <div class="summary-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid rgba(245, 158, 11, 0.2) !important; border-radius: 16px !important; padding: 24px !important; display: flex !important; align-items: center !important; gap: 20px !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important; position: relative !important; overflow: hidden !important; min-height: 120px !important;">
-                <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #f59e0b, #d97706);"></div>
-                <div class="summary-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706) !important; color: white !important; width: 70px !important; height: 70px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 16px !important; font-size: 28px !important; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3) !important; flex-shrink: 0 !important;">⏳</div>
-                <div class="summary-content" style="flex: 1 !important;">
-                    <h3 style="margin: 0 0 8px 0 !important; font-size: 12px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 1px !important;">Pending Amount</h3>
-                    <div class="summary-amount" id="pendingAmount" style="font-size: 28px !important; font-weight: 800 !important; color: #1e293b !important; margin-bottom: 4px !important; line-height: 1 !important; background: linear-gradient(135deg, #1e293b, #f59e0b) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important;">₹0</div>
-                    <div class="summary-details" id="pendingDetails" style="font-size: 13px !important; color: #64748b !important; font-weight: 500 !important; opacity: 0.8 !important;">unpaid rent & deposits</div>
-                </div>
-            </div>
-            
             <div class="summary-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important; border: 1px solid rgba(139, 92, 246, 0.2) !important; border-radius: 16px !important; padding: 24px !important; display: flex !important; align-items: center !important; gap: 20px !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important; position: relative !important; overflow: hidden !important; min-height: 120px !important;">
                 <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #8b5cf6, #7c3aed);"></div>
                 <div class="summary-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed) !important; color: white !important; width: 70px !important; height: 70px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 16px !important; font-size: 28px !important; box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3) !important; flex-shrink: 0 !important;">📊</div>
@@ -63,6 +53,32 @@
                     <h3 style="margin: 0 0 8px 0 !important; font-size: 12px !important; font-weight: 700 !important; color: #64748b !important; text-transform: uppercase !important; letter-spacing: 1px !important;">Capacity</h3>
                     <div class="summary-amount" id="capacityInfo" style="font-size: 28px !important; font-weight: 800 !important; color: #1e293b !important; margin-bottom: 4px !important; line-height: 1 !important; background: linear-gradient(135deg, #1e293b, #8b5cf6) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important;">0/17</div>
                     <div class="summary-details" id="capacityDetails" style="font-size: 13px !important; color: #64748b !important; font-weight: 500 !important; opacity: 0.8 !important;">beds available this month</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profit/Loss Calculation -->
+        <div class="profit-loss-section">
+            <div class="profit-loss-card">
+                <h3>Monthly Profit/Loss Calculation</h3>
+                <div class="calculation-grid">
+                    <div class="calculation-item">
+                        <span class="calculation-label">Total Collection:</span>
+                        <span class="calculation-value" id="totalCollectionDisplay">₹0</span>
+                    </div>
+                    <div class="calculation-item">
+                        <span class="calculation-label">Total Expense:</span>
+                        <span class="calculation-value" id="totalExpenseDisplay">₹0</span>
+                    </div>
+                    <div class="calculation-item">
+                        <span class="calculation-label">Cook Salary:</span>
+                        <span class="calculation-value" id="cookSalaryDisplay">₹0</span>
+                    </div>
+                    <div class="calculation-divider"></div>
+                    <div class="calculation-item result">
+                        <span class="calculation-label">Net Result:</span>
+                        <span class="calculation-value" id="netResultDisplay">₹0</span>
+                    </div>
                 </div>
             </div>
         </div>

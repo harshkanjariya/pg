@@ -1,6 +1,8 @@
 // Manage Page JavaScript
 let currentBed = null;
 let bedsData = {};
+let transactionsData = [];
+let currentMonthTransactions = [];
 
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async function() {
@@ -8,8 +10,43 @@ document.addEventListener("DOMContentLoaded", async function() {
     const authSuccess = await window.initializeProtectedPage();
     
     if (authSuccess) {
+        // Hide loading indicator
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+        
+        console.log('Authentication successful, initializing timeline...');
+        
+        // Load bed data and transactions
+        await loadBedsData();
+        await loadTransactionsData();
+        
+        // Show apartment layout
+        const apartmentLayout = document.getElementById('apartmentLayout');
+        if (apartmentLayout) {
+            apartmentLayout.style.display = 'block';
+            console.log('Apartment layout shown');
+        }
+        
+        // Update bed display and transaction indicators
+        updateBedDisplay();
+        updateTransactionIndicators();
+        console.log('Bed display and transaction indicators updated');
+        
         // Authentication successful, initialize timeline
         initializeTimeline();
+        
+        console.log('Timeline initialized, page should be visible now');
+        
+        // Debug: Check if main content is visible
+        const mainContent = document.querySelector('.manage-main');
+        if (mainContent) {
+            mainContent.style.display = 'block';
+            mainContent.style.visibility = 'visible';
+        } else {
+            console.error('Main content not found!');
+        }
     } else {
         // Authentication failed, show error
         document.getElementById('loadingIndicator').innerHTML = `
@@ -121,6 +158,96 @@ async function moveToHistory(bedData, actualCheckoutDate) {
     }
 }
 
+// Load transactions data from Firestore
+async function loadTransactionsData() {
+    try {
+        const transactionsRef = window.firestoreCollection(window.firebaseDB, 'transactions');
+        const snapshot = await window.firestoreGetDocs(transactionsRef);
+        
+        transactionsData = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            transactionsData.push({
+                id: doc.id,
+                ...data
+            });
+        });
+        
+        console.log('Loaded transactions:', transactionsData.length);
+        console.log('All transactions:', transactionsData);
+        
+        // Filter current month transactions
+        updateCurrentMonthTransactions();
+        
+    } catch (error) {
+        console.error('Error loading transactions:', error);
+    }
+}
+
+// Update current month transactions based on current date
+function updateCurrentMonthTransactions() {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    currentMonthTransactions = transactionsData.filter(transaction => {
+        const transactionDate = new Date(transaction.date);
+        return transactionDate.getMonth() === currentMonth && 
+               transactionDate.getFullYear() === currentYear &&
+               transaction.type === 'collection';
+    });
+}
+
+// Check if bed has collection transaction for current month
+function hasCurrentMonthCollection(bedId) {
+    return currentMonthTransactions.some(transaction => transaction.bedId === bedId);
+}
+
+// Update transaction indicators on all beds
+function updateTransactionIndicators() {
+    const beds = document.querySelectorAll('.bed');
+    console.log('Updating transaction indicators for', beds.length, 'beds');
+    console.log('Current month transactions:', currentMonthTransactions.length);
+    console.log('Beds data keys:', Object.keys(bedsData));
+    
+    beds.forEach(bed => {
+        const room = bed.getAttribute('data-room');
+        const bedNumber = bed.getAttribute('data-bed');
+        const bedId = `${room}_bed${bedNumber}`;
+        console.log('Processing bed:', bedId, 'from room:', room, 'bed:', bedNumber);
+        
+        // Remove existing indicator
+        const existingIndicator = bed.querySelector('.bed-transaction-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        // Only show indicator for occupied beds
+        if (bedsData[bedId] && bedsData[bedId].isOccupied) {
+            const hasCollection = hasCurrentMonthCollection(bedId);
+            console.log(`Bed ${bedId} is occupied, has collection:`, hasCollection);
+            
+            if (hasCollection) {
+                // Create paid indicator (green checkmark)
+                const indicator = document.createElement('div');
+                indicator.className = 'bed-transaction-indicator paid';
+                indicator.innerHTML = '✓';
+                bed.appendChild(indicator);
+                console.log('Added paid indicator to', bedId);
+            } else {
+                // Create unpaid indicator (red X)
+                const indicator = document.createElement('div');
+                indicator.className = 'bed-transaction-indicator unpaid';
+                indicator.innerHTML = '✗';
+                bed.appendChild(indicator);
+                console.log('Added unpaid indicator to', bedId);
+            }
+        } else {
+            console.log(`Bed ${bedId} is not occupied or not in bedsData`);
+        }
+    });
+}
+
 // Load beds data from Firestore
 async function loadBedsData() {
     try {
@@ -228,6 +355,9 @@ function updateBedDisplay() {
     
     // Update deposit summary
     updateDepositSummary();
+    
+    // Update transaction indicators
+    updateTransactionIndicators();
 }
 
 // Get default room price based on room type
@@ -797,9 +927,11 @@ function updateTimeline() {
 }
 
 function generateDateMarks(startDate, endDate) {
-    const timelineContent = document.getElementById('timelineContent');
-    const dateMarksContainer = document.createElement('div');
-    dateMarksContainer.className = 'timeline-date-marks';
+    const dateMarksContainer = document.getElementById('timelineDateMarks');
+    if (!dateMarksContainer) return;
+    
+    // Clear existing marks
+    dateMarksContainer.innerHTML = '';
     
     const start = new Date(startDate);
     const end = new Date(endDate);
@@ -815,8 +947,6 @@ function generateDateMarks(startDate, endDate) {
         mark.textContent = formatDate(currentDate);
         dateMarksContainer.appendChild(mark);
     }
-    
-    timelineContent.appendChild(dateMarksContainer);
 }
 
 function createTimelineRow(bedId, bedData, startDate, endDate) {
@@ -1504,9 +1634,12 @@ function updateTimelineBarsOnly(startDate, endDate) {
             row.classList.remove('hidden-permanent');
         }
     });
-    
-    // Update date marks smoothly
-    updateDateMarks(startDate, endDate);
+}
+
+// Update date marks for smooth timeline navigation
+function updateDateMarks(startDate, endDate) {
+    // Simply regenerate date marks in the dedicated container
+    generateDateMarks(startDate, endDate);
 }
 
 // Check if a permanent occupant spans the full width of the current timeline

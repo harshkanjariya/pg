@@ -72,7 +72,7 @@ async function loadTransactionsData() {
 function updateTransactionSummary() {
     let totalExpenses = 0;
     let totalCollections = 0;
-    let pendingAmount = 0;
+    // Pending amount removed
     let occupiedBeds = 0;
     
     // Calculate from transactions data
@@ -84,25 +84,10 @@ function updateTransactionSummary() {
         }
     });
     
-    // Calculate pending amount and occupied beds from bed data
-    Object.keys(bedsData).forEach(bedId => {
-        const bedData = bedsData[bedId];
-        
-        if (bedData.isOccupied) {
+    // Count occupied beds
+    Object.values(bedsData).forEach(bed => {
+        if (bed.isOccupied) {
             occupiedBeds++;
-            
-            // Calculate pending amount (rent + deposit that hasn't been collected yet)
-            const bedTotal = (bedData.price || 0) + (bedData.deposit || 0);
-            
-            // Check if this bed has any collection transactions
-            const bedCollections = transactionsData.filter(t => 
-                t.type === 'collection' && t.bedId === bedId
-            ).reduce((sum, t) => sum + (t.amount || 0), 0);
-            
-            // Add to pending if collections are less than total
-            if (bedCollections < bedTotal) {
-                pendingAmount += bedTotal - bedCollections;
-            }
         }
     });
     
@@ -129,11 +114,43 @@ function updateTransactionSummary() {
     document.getElementById('totalCollections').textContent = `₹${totalCollections.toLocaleString()}`;
     document.getElementById('collectionDetails').textContent = 'rent + deposits collected';
     
-    document.getElementById('pendingAmount').textContent = `₹${pendingAmount.toLocaleString()}`;
-    document.getElementById('pendingDetails').textContent = 'unpaid rent & deposits';
+    // Pending amount card removed - updated
     
     document.getElementById('capacityInfo').textContent = `₹${totalPotentialRevenue.toLocaleString()}`;
     document.getElementById('capacityDetails').textContent = 'total potential revenue';
+    
+    // Update profit/loss calculation
+    updateProfitLossCalculation(totalCollections, totalExpenses);
+}
+
+// Update profit/loss calculation
+function updateProfitLossCalculation(totalCollections, totalExpenses) {
+    // Calculate cook salary (you can modify this logic as needed)
+    // For now, let's assume cook salary is a fixed amount or calculate from expenses
+    const cookSalary = calculateCookSalary(totalExpenses);
+    
+    // Calculate net result
+    const netResult = totalCollections - totalExpenses - cookSalary;
+    
+    // Update display
+    document.getElementById('totalCollectionDisplay').textContent = `₹${totalCollections.toLocaleString()}`;
+    document.getElementById('totalExpenseDisplay').textContent = `₹${totalExpenses.toLocaleString()}`;
+    document.getElementById('cookSalaryDisplay').textContent = `₹${cookSalary.toLocaleString()}`;
+    
+    // Update net result with color coding
+    const netResultElement = document.getElementById('netResultDisplay');
+    if (netResult >= 0) {
+        netResultElement.textContent = `+₹${netResult.toLocaleString()} (Profit)`;
+        netResultElement.style.color = '#10b981'; // Green for profit
+    } else {
+        netResultElement.textContent = `₹${netResult.toLocaleString()} (Loss)`;
+        netResultElement.style.color = '#ef4444'; // Red for loss
+    }
+}
+
+// Calculate cook salary (you can modify this logic)
+function calculateCookSalary(totalExpenses) {
+    return 15000;
 }
 
 // Display transactions

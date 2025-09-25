@@ -32,6 +32,7 @@ async function initializeFirebase() {
         // Make Firebase functions globally available
         window.firebaseAuth = firebaseAuth;
         window.firebaseSignOut = signOut;
+        window.firebaseOnAuthStateChanged = onAuthStateChanged;
         window.firebaseDB = firebaseDB;
         window.firestoreCollection = collection;
         window.firestoreDoc = doc;
@@ -55,16 +56,25 @@ async function checkOwnerAuthentication() {
     try {
         console.log('Starting owner authentication check...');
         
+        // Ensure Firebase is initialized
+        if (!window.firebaseAuth) {
+            console.log('Firebase auth not ready, waiting...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!window.firebaseAuth) {
+                throw new Error('Firebase auth not initialized');
+            }
+        }
+        
         // Wait for auth state to be ready
         await new Promise((resolve) => {
-            const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
+            const unsubscribe = window.firebaseAuth.onAuthStateChanged((user) => {
                 console.log('Auth state changed:', user ? user.email : 'No user');
                 unsubscribe();
                 resolve(user);
             });
         });
         
-        const user = firebaseAuth.currentUser;
+        const user = window.firebaseAuth.currentUser;
         console.log('Current user:', user ? user.email : 'No current user');
         
         if (!user) {
@@ -93,11 +103,11 @@ async function checkOwnerAuthentication() {
 // Sign in with Google
 async function signInWithGoogle() {
     try {
-        if (!firebaseAuth) {
+        if (!window.firebaseAuth) {
             throw new Error('Firebase not initialized');
         }
         
-        const result = await window.firebaseSignIn(firebaseAuth, window.firebaseProvider);
+        const result = await window.firebaseSignIn(window.firebaseAuth, window.firebaseProvider);
         const user = result.user;
         
         console.log('Sign-in successful:', user.email);
@@ -115,11 +125,11 @@ async function signInWithGoogle() {
 // Sign out user
 async function signOutUser() {
     try {
-        if (!firebaseAuth) {
+        if (!window.firebaseAuth) {
             throw new Error('Firebase not initialized');
         }
         
-        await window.firebaseSignOut(firebaseAuth);
+        await window.firebaseSignOut(window.firebaseAuth);
         console.log('Sign-out successful');
         return true;
     } catch (error) {
@@ -130,12 +140,13 @@ async function signOutUser() {
 
 // Handle authentication state changes
 function onAuthStateChanged(callback) {
-    if (!firebaseAuth) {
+    if (!window.firebaseAuth) {
         console.error('Firebase not initialized');
-        return null;
+        // Return a dummy unsubscribe function
+        return () => {};
     }
     
-    return firebaseAuth.onAuthStateChanged(callback);
+    return window.firebaseAuth.onAuthStateChanged(callback);
 }
 
 // Show owner controls (for landing page)
@@ -182,8 +193,22 @@ async function initializeProtectedPage() {
             throw new Error('Firebase initialization failed');
         }
         
-        // Check authentication
-        const authResult = await checkOwnerAuthentication();
+        // Wait a bit more to ensure Firebase is fully ready
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Double-check that Firebase auth is available
+        if (!window.firebaseAuth) {
+            throw new Error('Firebase auth not available after initialization');
+        }
+        
+        // Add timeout to prevent infinite loading
+        const authPromise = checkOwnerAuthentication();
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Authentication timeout')), 10000)
+        );
+        
+        // Check authentication with timeout
+        const authResult = await Promise.race([authPromise, timeoutPromise]);
         
         if (!authResult.authenticated) {
             if (authResult.reason === 'not_owner') {
@@ -198,6 +223,7 @@ async function initializeProtectedPage() {
         
     } catch (error) {
         console.error('Protected page initialization failed:', error);
+        alert('Authentication failed. Please try signing in again.');
         window.location.href = 'index.html';
         return false;
     }

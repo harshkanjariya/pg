@@ -282,6 +282,33 @@ body {
     box-shadow: 0 4px 12px rgba(65, 105, 225, 0.2);
 }
 
+/* Transaction Indicator */
+.bed-transaction-indicator {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.bed-transaction-indicator.paid {
+    background: #10b981;
+    color: white;
+}
+
+.bed-transaction-indicator.unpaid {
+    background: #ef4444;
+    color: white;
+}
+
 /* Bed Status Colors */
 .bed.empty {
     background: #f0fdf4 !important; /* Light green - Available */
@@ -850,6 +877,7 @@ body {
 .timeline-content {
     overflow-x: auto;
     transition: opacity 0.3s ease;
+    min-height: 200px;
 }
 
 .timeline-bar-container {

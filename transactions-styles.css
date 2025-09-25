@@ -414,6 +414,138 @@ body {
     font-size: 1.1rem;
 }
 
+/* Profit/Loss Calculation Styles */
+.profit-loss-section {
+    margin: 32px 0;
+    padding: 0 16px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.profit-loss-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid rgba(65, 105, 225, 0.2);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.profit-loss-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4169E1, #1e40af);
+}
+
+.profit-loss-card h3 {
+    margin: 0 0 24px 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    text-align: center;
+}
+
+.calculation-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.calculation-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: rgba(248, 250, 252, 0.8);
+    border-radius: 12px;
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    transition: all 0.3s ease;
+}
+
+.calculation-item:hover {
+    background: rgba(241, 245, 249, 0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.calculation-item.result {
+    background: linear-gradient(135deg, rgba(65, 105, 225, 0.1), rgba(30, 64, 175, 0.1));
+    border: 2px solid rgba(65, 105, 225, 0.3);
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.calculation-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #475569;
+}
+
+.calculation-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.calculation-item.result .calculation-label {
+    font-size: 18px;
+    color: #1e293b;
+}
+
+.calculation-item.result .calculation-value {
+    font-size: 20px;
+    background: linear-gradient(135deg, #4169E1, #1e40af);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.calculation-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+    margin: 8px 0;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .profit-loss-card {
+        padding: 24px 20px;
+    }
+    
+    .profit-loss-card h3 {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+    
+    .calculation-item {
+        padding: 12px 16px;
+    }
+    
+    .calculation-label {
+        font-size: 14px;
+    }
+    
+    .calculation-value {
+        font-size: 16px;
+    }
+    
+    .calculation-item.result .calculation-label {
+        font-size: 16px;
+    }
+    
+    .calculation-item.result .calculation-value {
+        font-size: 18px;
+    }
+}
+
 /* Transaction Modal Styles */
 .modal {
     display: none;
