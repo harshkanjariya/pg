@@ -3,6 +3,7 @@ let currentBed = null;
 let bedsData = {};
 let transactionsData = [];
 let currentMonthTransactions = [];
+let selectedFilesForBeds = {};
 
 // Initialize the page
 document.addEventListener("DOMContentLoaded", async function() {
@@ -543,6 +544,7 @@ function showOccupantDialog(bedData) {
             <button class="btn-primary" onclick="editOccupant()">Edit All Details</button>
             <button class="btn-secondary" onclick="quickEditPrice()">Quick Edit Rent</button>
             <button class="btn-secondary" onclick="quickEditDeposit()">Quick Edit Deposit</button>
+            <button class="btn-info" onclick="viewOccupantDocuments()">📄 View Documents</button>
             <button class="btn-danger" onclick="vacateBed()">Vacate Bed</button>
         </div>
     `;
@@ -1711,4 +1713,252 @@ function togglePermanentRows() {
             row.classList.remove('hidden-permanent');
         }
     });
+}
+
+
+// Document Upload Functions
+function toggleUploadForm() {
+    const uploadForm = document.getElementById('uploadForm');
+    const toggleBtn = document.getElementById('toggleUploadBtn');
+    
+    if (uploadForm.style.display === 'none' || uploadForm.style.display === '') {
+        uploadForm.style.display = 'block';
+        toggleBtn.textContent = '− Hide Form';
+        toggleBtn.classList.add('btn-secondary');
+        toggleBtn.classList.remove('btn-primary');
+    } else {
+        uploadForm.style.display = 'none';
+        toggleBtn.textContent = '+ Add Document';
+        toggleBtn.classList.add('btn-primary');
+        toggleBtn.classList.remove('btn-secondary');
+        resetUploadForm();
+    }
+}
+
+function resetUploadForm() {
+    document.getElementById('guestEmail').value = '';
+    document.getElementById('documentType').value = '';
+    document.getElementById('documentName').value = '';
+    document.getElementById('documentFile').value = '';
+    document.getElementById('documentNotes').value = '';
+    
+    // Hide progress bar
+    const progressDiv = document.getElementById('uploadProgress');
+    progressDiv.style.display = 'none';
+    
+    // Reset upload button
+    const uploadBtn = document.getElementById('uploadBtn');
+    uploadBtn.disabled = false;
+    uploadBtn.textContent = '📤 Upload Document';
+}
+
+async function uploadDocument() {
+    const guestEmail = document.getElementById('guestEmail').value.trim();
+    const documentType = document.getElementById('documentType').value;
+    const documentName = document.getElementById('documentName').value.trim();
+    const documentFile = document.getElementById('documentFile').files[0];
+    const documentNotes = document.getElementById('documentNotes').value.trim();
+    
+    // Validation
+    if (!guestEmail || !documentType || !documentFile) {
+        alert('Please fill in all required fields (Email, Document Type, and File).');
+        return;
+    }
+    
+    // File size validation (10MB limit)
+    if (documentFile.size > 10 * 1024 * 1024) {
+        alert('File size must be less than 10MB.');
+        return;
+    }
+    
+    // File type validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+    if (!allowedTypes.includes(documentFile.type)) {
+        alert('Please select a valid file type (JPG, PNG, or PDF).');
+        return;
+    }
+    
+    try {
+        // Show progress bar
+        const progressDiv = document.getElementById('uploadProgress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const uploadBtn = document.getElementById('uploadBtn');
+        
+        progressDiv.style.display = 'block';
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = '⏳ Uploading...';
+        
+        // Update progress
+        progressFill.style.width = '20%';
+        progressText.textContent = 'Preparing file...';
+        
+        // Generate unique filename
+        const timestamp = Date.now();
+        const fileExtension = documentFile.name.split('.').pop();
+        const fileName = `${guestEmail.replace('@', '_at_')}_${documentType}_${timestamp}.${fileExtension}`;
+        
+        // Create Firebase Storage reference
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+        const documentRef = storageRef.child(`documents/${fileName}`);
+        
+        // Update progress
+        progressFill.style.width = '40%';
+        progressText.textContent = 'Uploading to Firebase Storage...';
+        
+        // Upload file to Firebase Storage
+        const uploadTask = documentRef.put(documentFile);
+        
+        // Monitor upload progress
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                progressFill.style.width = `${40 + (progress * 0.4)}%`;
+                progressText.textContent = `Uploading... ${Math.round(progress)}%`;
+            },
+            (error) => {
+                console.error('Upload error:', error);
+                alert('Upload failed: ' + error.message);
+                resetUploadForm();
+            },
+            async () => {
+                try {
+                    // Get download URL
+                    progressFill.style.width = '80%';
+                    progressText.textContent = 'Getting download URL...';
+                    
+                    const downloadURL = await window.storageGetDownloadURL(documentRef);
+                    
+                    // Update progress
+                    progressFill.style.width = '90%';
+                    progressText.textContent = 'Saving document information...';
+                    
+                    // Save document metadata to Firestore
+                    const db = firebase.firestore();
+                    const documentData = {
+                        guestEmail: guestEmail,
+                        documentType: documentType,
+                        documentName: documentName || `${documentType.replace('_', ' ').toUpperCase()}`,
+                        fileName: fileName,
+                        originalFileName: documentFile.name,
+                        downloadURL: downloadURL,
+                        fileSize: documentFile.size,
+                        fileType: documentFile.type,
+                        notes: documentNotes,
+                        uploadDate: firebase.firestore.FieldValue.serverTimestamp(),
+                        uploadedBy: firebase.auth().currentUser.email
+                    };
+                    
+                    await db.collection('documents').add(documentData);
+                    
+                    // Complete progress
+                    progressFill.style.width = '100%';
+                    progressText.textContent = 'Upload completed successfully!';
+                    
+                    // Show success message
+                    setTimeout(() => {
+                        alert('Document uploaded successfully!');
+                        resetUploadForm();
+                        toggleUploadForm();
+                        
+                        // Refresh documents list if on documents page
+                        if (typeof refreshDocuments === 'function') {
+                            refreshDocuments();
+                        }
+                    }, 1000);
+                    
+                } catch (error) {
+                    console.error('Error saving document metadata:', error);
+                    alert('Document uploaded but failed to save metadata: ' + error.message);
+                    resetUploadForm();
+                }
+            }
+        );
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        alert('Upload failed: ' + error.message);
+        resetUploadForm();
+    }
+}
+
+// Function to get all documents for a specific guest
+async function getGuestDocuments(guestEmail) {
+    try {
+        const db = firebase.firestore();
+        const documentsRef = db.collection('documents')
+            .where('guestEmail', '==', guestEmail)
+            .orderBy('uploadDate', 'desc');
+        
+        const snapshot = await documentsRef.get();
+        const documents = [];
+        
+        snapshot.forEach(doc => {
+            documents.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        return documents;
+    } catch (error) {
+        console.error('Error fetching guest documents:', error);
+        return [];
+    }
+}
+
+// Function to delete a document
+async function deleteDocument(documentId, fileName) {
+    if (!confirm('Are you sure you want to delete this document? This action cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        // Delete from Firebase Storage
+        const storage = firebase.storage();
+        const storageRef = storage.ref();
+        const documentRef = storageRef.child(`documents/${fileName}`);
+        await documentRef.delete();
+        
+        // Delete from Firestore
+        const db = firebase.firestore();
+        await db.collection('documents').doc(documentId).delete();
+        
+        alert('Document deleted successfully!');
+        
+        // Refresh documents list if on documents page
+        if (typeof refreshDocuments === 'function') {
+            refreshDocuments();
+        }
+        
+    } catch (error) {
+        console.error('Error deleting document:', error);
+        alert('Failed to delete document: ' + error.message);
+    }
+}
+
+
+// Function to view documents for current occupant
+function viewOccupantDocuments() {
+    const bedData = bedsData[currentBed];
+    
+    // Use mobile number as primary identifier, email as secondary
+    const phoneNumber = bedData.occupantPhone;
+    const emailAddress = bedData.occupantEmail;
+    
+    if (!phoneNumber) {
+        alert('No mobile number found for this occupant. Please add a mobile number first.');
+        return;
+    }
+    
+    // Close current modal
+    document.getElementById('bedModal').style.display = 'none';
+    
+    // Navigate to documents page with pre-filled phone number and email
+    let url = `documents.html?phone=${encodeURIComponent(phoneNumber)}`;
+    if (emailAddress) {
+        url += `&email=${encodeURIComponent(emailAddress)}`;
+    }
+    window.location.href = url;
 }

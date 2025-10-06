@@ -12,6 +12,7 @@ async function initializeFirebase() {
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
         const { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
         const { getAuth, signOut, GoogleAuthProvider, signInWithPopup } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+        const { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject, listAll } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js");
 
         // Firebase configuration
         const firebaseConfig = {
@@ -28,12 +29,14 @@ async function initializeFirebase() {
         const app = initializeApp(firebaseConfig);
         firebaseDB = getFirestore(app);
         firebaseAuth = getAuth(app);
+        const firebaseStorage = getStorage(app);
 
         // Make Firebase functions globally available
         window.firebaseAuth = firebaseAuth;
         window.firebaseSignOut = signOut;
         window.firebaseOnAuthStateChanged = onAuthStateChanged;
         window.firebaseDB = firebaseDB;
+        window.firebaseStorage = firebaseStorage;
         window.firestoreCollection = collection;
         window.firestoreDoc = doc;
         window.firestoreGetDocs = getDocs;
@@ -42,6 +45,13 @@ async function initializeFirebase() {
         window.firestoreDeleteDoc = deleteDoc;
         window.firebaseProvider = new GoogleAuthProvider();
         window.firebaseSignIn = signInWithPopup;
+        // Storage functions
+        window.storageRef = ref;
+        window.storageUploadBytes = uploadBytes;
+        window.storageUploadBytesResumable = uploadBytesResumable;
+        window.storageGetDownloadURL = getDownloadURL;
+        window.storageDeleteObject = deleteObject;
+        window.storageListAll = listAll;
 
         console.log('Firebase initialized successfully');
         return true;
@@ -288,6 +298,151 @@ async function handleCredentialResponse(response) {
 }
 
 // Make functions globally available
+// Storage utility functions
+async function uploadDocument(file, guestEmail, documentType) {
+    try {
+        if (!window.firebaseStorage) {
+            throw new Error('Firebase Storage not initialized');
+        }
+
+        // Create a unique filename
+        const timestamp = Date.now();
+        const fileName = `${guestEmail}_${documentType}_${timestamp}_${file.name}`;
+        
+        // Create storage reference
+        const storageRef = window.storageRef(window.firebaseStorage, `guest-documents/${guestEmail}/${fileName}`);
+        
+        // Upload file with progress tracking
+        const uploadTask = window.storageUploadBytesResumable(storageRef, file);
+        
+        return new Promise((resolve, reject) => {
+            uploadTask.on('state_changed',
+                (snapshot) => {
+                    // Progress tracking
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    console.log('Upload is ' + progress + '% done');
+                    
+                    // Dispatch progress event
+                    window.dispatchEvent(new CustomEvent('uploadProgress', {
+                        detail: { progress, fileName }
+                    }));
+                },
+                (error) => {
+                    console.error('Upload error:', error);
+                    reject(error);
+                },
+                async () => {
+                    // Upload completed successfully
+                    try {
+                        const downloadURL = await window.storageGetDownloadURL(uploadTask.snapshot.ref);
+                        
+                        // Store document metadata in Firestore
+                        const documentData = {
+                            fileName: file.name,
+                            storagePath: `guest-documents/${guestEmail}/${fileName}`,
+                            downloadURL: downloadURL,
+                            guestEmail: guestEmail,
+                            documentType: documentType,
+                            fileSize: file.size,
+                            uploadDate: new Date().toISOString(),
+                            mimeType: file.type
+                        };
+                        
+                        await window.firestoreSetDoc(
+                            window.firestoreDoc(window.firebaseDB, 'guest-documents', `${guestEmail}_${timestamp}`),
+                            documentData
+                        );
+                        
+                        resolve({
+                            success: true,
+                            downloadURL: downloadURL,
+                            fileName: file.name,
+                            documentData: documentData
+                        });
+                    } catch (error) {
+                        console.error('Error getting download URL or saving metadata:', error);
+                        reject(error);
+                    }
+                }
+            );
+        });
+    } catch (error) {
+        console.error('Upload document error:', error);
+        throw error;
+    }
+}
+
+async function getGuestDocuments(guestEmail) {
+    try {
+        if (!window.firebaseDB) {
+            throw new Error('Firebase not initialized');
+        }
+
+        const documentsRef = window.firestoreCollection(window.firebaseDB, 'guest-documents');
+        const querySnapshot = await window.firestoreGetDocs(documentsRef);
+        
+        const documents = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data.guestEmail === guestEmail) {
+                documents.push({
+                    id: doc.id,
+                    ...data
+                });
+            }
+        });
+        
+        return documents.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+    } catch (error) {
+        console.error('Error getting guest documents:', error);
+        throw error;
+    }
+}
+
+async function getAllGuestDocuments() {
+    try {
+        if (!window.firebaseDB) {
+            throw new Error('Firebase not initialized');
+        }
+
+        const documentsRef = window.firestoreCollection(window.firebaseDB, 'guest-documents');
+        const querySnapshot = await window.firestoreGetDocs(documentsRef);
+        
+        const documents = [];
+        querySnapshot.forEach((doc) => {
+            documents.push({
+                id: doc.id,
+                ...doc.data()
+            });
+        });
+        
+        return documents.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
+    } catch (error) {
+        console.error('Error getting all guest documents:', error);
+        throw error;
+    }
+}
+
+async function deleteDocument(documentId, storagePath) {
+    try {
+        if (!window.firebaseDB || !window.firebaseStorage) {
+            throw new Error('Firebase not initialized');
+        }
+
+        // Delete from Firestore
+        await window.firestoreDeleteDoc(window.firestoreDoc(window.firebaseDB, 'guest-documents', documentId));
+        
+        // Delete from Storage
+        const storageRef = window.storageRef(window.firebaseStorage, storagePath);
+        await window.storageDeleteObject(storageRef);
+        
+        return { success: true };
+    } catch (error) {
+        console.error('Error deleting document:', error);
+        throw error;
+    }
+}
+
 window.initializeFirebase = initializeFirebase;
 window.checkOwnerAuthentication = checkOwnerAuthentication;
 window.signInWithGoogle = signInWithGoogle;
@@ -301,3 +456,8 @@ window.initializeProtectedPage = initializeProtectedPage;
 window.initializeLandingPage = initializeLandingPage;
 window.showSignInButton = showSignInButton;
 window.handleCredentialResponse = handleCredentialResponse;
+// Storage functions
+window.uploadDocument = uploadDocument;
+window.getGuestDocuments = getGuestDocuments;
+window.getAllGuestDocuments = getAllGuestDocuments;
+window.deleteDocument = deleteDocument;
