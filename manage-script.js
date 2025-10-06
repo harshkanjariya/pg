@@ -118,6 +118,7 @@ async function performAutomaticCheckouts(autoCheckouts) {
                 deposit: 0,
                 checkInDate: "",
                 checkOutDate: "",
+                expectedCollectionDate: null,
                 notes: ""
             };
             
@@ -195,9 +196,65 @@ function updateCurrentMonthTransactions() {
     });
 }
 
-// Check if bed has collection transaction for current month
+// Check collection status for bed (returns: 'collected', 'pending', 'overdue', or 'not_collected')
+function getCollectionStatus(bedId) {
+    const bedData = bedsData[bedId];
+    if (!bedData || !bedData.isOccupied) {
+        return 'not_applicable';
+    }
+    
+    // PRIORITY 1: Check for current month collection first - if collected, always show green tick
+    const hasCurrentMonth = currentMonthTransactions.some(transaction => transaction.bedId === bedId);
+    
+    if (hasCurrentMonth) {
+        return 'collected';
+    }
+    
+    // PRIORITY 2: Fallback for temporary occupants - if they have any collection, show green tick
+    if (isTemporaryOccupant(bedData)) {
+        return hasAnyCollectionTransaction(bedId) ? 'collected' : 'not_collected';
+    }
+    
+    // PRIORITY 3: For permanent occupants, check expected collection date only if NOT collected
+    if (bedData.expectedCollectionDate) {
+        const expectedDatePassed = hasExpectedCollectionDatePassed(bedData);
+        return expectedDatePassed ? 'overdue' : 'pending';
+    }
+    
+    // No expected date set, use normal logic
+    return 'not_collected';
+}
+
+// Legacy function for backward compatibility
 function hasCurrentMonthCollection(bedId) {
-    return currentMonthTransactions.some(transaction => transaction.bedId === bedId);
+    const status = getCollectionStatus(bedId);
+    return status === 'collected';
+}
+
+// Check if occupant is temporary (reuses getBedStatus logic for consistency)
+function isTemporaryOccupant(bedData) {
+    return getBedStatus(bedData) === 'temporary';
+}
+
+// Check if bed has any collection transaction (not just current month)
+function hasAnyCollectionTransaction(bedId) {
+    return transactionsData.some(transaction => 
+        transaction.bedId === bedId && 
+        transaction.type === 'collection'
+    );
+}
+
+// Check if expected collection date has passed for current month
+function hasExpectedCollectionDatePassed(bedData) {
+    if (!bedData.expectedCollectionDate) {
+        return false; // No expected date set, use normal logic
+    }
+    
+    const today = new Date();
+    const currentDay = today.getDate();
+    const expectedDay = parseInt(bedData.expectedCollectionDate);
+    
+    return currentDay > expectedDay;
 }
 
 // Update transaction indicators on all beds
@@ -217,19 +274,36 @@ function updateTransactionIndicators() {
         
         // Only show indicator for occupied beds
         if (bedsData[bedId] && bedsData[bedId].isOccupied) {
-            const hasCollection = hasCurrentMonthCollection(bedId);
+            const collectionStatus = getCollectionStatus(bedId);
+            const bedData = bedsData[bedId];
             
-            if (hasCollection) {
+            if (collectionStatus === 'collected') {
                 // Create paid indicator (green checkmark)
                 const indicator = document.createElement('div');
                 indicator.className = 'bed-transaction-indicator paid';
                 indicator.innerHTML = '✓';
+                indicator.title = 'Collection received';
                 bed.appendChild(indicator);
-            } else {
-                // Create unpaid indicator (red X)
+            } else if (collectionStatus === 'pending') {
+                // Create pending indicator (clock icon)
+                const indicator = document.createElement('div');
+                indicator.className = 'bed-transaction-indicator pending';
+                indicator.innerHTML = '⏰';
+                indicator.title = `Collection pending - Expected on ${bedData.expectedCollectionDate}${getOrdinalSuffix(bedData.expectedCollectionDate)}`;
+                bed.appendChild(indicator);
+            } else if (collectionStatus === 'overdue') {
+                // Create overdue indicator (red X)
                 const indicator = document.createElement('div');
                 indicator.className = 'bed-transaction-indicator unpaid';
                 indicator.innerHTML = '✗';
+                indicator.title = `Collection overdue - Expected on ${bedData.expectedCollectionDate}${getOrdinalSuffix(bedData.expectedCollectionDate)}`;
+                bed.appendChild(indicator);
+            } else {
+                // Create unpaid indicator (red X) - for cases without expected date
+                const indicator = document.createElement('div');
+                indicator.className = 'bed-transaction-indicator unpaid';
+                indicator.innerHTML = '✗';
+                indicator.title = 'Collection not received';
                 bed.appendChild(indicator);
             }
         } else {
@@ -290,6 +364,7 @@ function initializeDefaultBeds() {
                     deposit: 0,
                     checkInDate: "",
                     checkOutDate: "",
+                    expectedCollectionDate: null,
                     notes: ""
                 };
             }
@@ -388,6 +463,7 @@ function ensureAllBedsHaveData() {
                     deposit: 0,
                     checkInDate: "",
                     checkOutDate: "",
+                    expectedCollectionDate: null,
                     notes: ""
                 };
             } else {
@@ -454,6 +530,7 @@ function handleBedClick(bedElement) {
             price: 6500,
             checkInDate: "",
             checkOutDate: "",
+            expectedCollectionDate: null,
             notes: ""
         });
     }
@@ -518,6 +595,10 @@ function showOccupantDialog(bedData) {
                 <span class="info-label">Check-out Date:</span>
                 <span class="info-value">${bedData.checkOutDate || "Not specified (Permanent)"}</span>
             </div>
+            ${bedData.expectedCollectionDate ? `<div class="info-row">
+                <span class="info-label">Expected Collection Date:</span>
+                <span class="info-value">${bedData.expectedCollectionDate}${getOrdinalSuffix(bedData.expectedCollectionDate)} of each month</span>
+            </div>` : ''}
             ${stayDuration ? `<div class="info-row">
                 <span class="info-label">Stay Duration:</span>
                 <span class="info-value">${stayDuration}</span>
@@ -538,6 +619,22 @@ function showOccupantDialog(bedData) {
     `;
     
     modal.style.display = "block";
+}
+
+// Get ordinal suffix for numbers (1st, 2nd, 3rd, etc.)
+function getOrdinalSuffix(num) {
+    const j = num % 10;
+    const k = num % 100;
+    if (j == 1 && k != 11) {
+        return "st";
+    }
+    if (j == 2 && k != 12) {
+        return "nd";
+    }
+    if (j == 3 && k != 13) {
+        return "rd";
+    }
+    return "th";
 }
 
 // Get color for status display
@@ -608,6 +705,33 @@ function showOccupantForm(bedData) {
             </div>
             
             <div class="form-group">
+                <label for="expectedCollectionDate">Expected Collection Date (1st-20th)</label>
+                <select id="expectedCollectionDate" name="expectedCollectionDate">
+                    <option value="">Select Collection Date</option>
+                    <option value="1">1st</option>
+                    <option value="2">2nd</option>
+                    <option value="3">3rd</option>
+                    <option value="4">4th</option>
+                    <option value="5">5th</option>
+                    <option value="6">6th</option>
+                    <option value="7">7th</option>
+                    <option value="8">8th</option>
+                    <option value="9">9th</option>
+                    <option value="10">10th</option>
+                    <option value="11">11th</option>
+                    <option value="12">12th</option>
+                    <option value="13">13th</option>
+                    <option value="14">14th</option>
+                    <option value="15">15th</option>
+                    <option value="16">16th</option>
+                    <option value="17">17th</option>
+                    <option value="18">18th</option>
+                    <option value="19">19th</option>
+                    <option value="20">20th</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label for="notes">Notes</label>
                 <textarea id="notes" name="notes" rows="3" placeholder="Any additional notes..."></textarea>
             </div>
@@ -646,6 +770,7 @@ async function saveOccupant(event) {
             price: 6500,
             checkInDate: "",
             checkOutDate: "",
+            expectedCollectionDate: null,
             notes: ""
         };
     }
@@ -662,6 +787,7 @@ async function saveOccupant(event) {
         deposit: parseInt(formData.get("deposit")) || 0,
         checkInDate: formData.get("checkInDate"),
         checkOutDate: formData.get("checkOutDate"),
+        expectedCollectionDate: formData.get("expectedCollectionDate") || null,
         notes: formData.get("notes")
     };
     
@@ -765,6 +891,33 @@ function editOccupant() {
             </div>
             
             <div class="form-group">
+                <label for="editExpectedCollectionDate">Expected Collection Date (1st-20th)</label>
+                <select id="editExpectedCollectionDate" name="expectedCollectionDate">
+                    <option value="">Select Collection Date</option>
+                    <option value="1" ${bedData.expectedCollectionDate == 1 ? 'selected' : ''}>1st</option>
+                    <option value="2" ${bedData.expectedCollectionDate == 2 ? 'selected' : ''}>2nd</option>
+                    <option value="3" ${bedData.expectedCollectionDate == 3 ? 'selected' : ''}>3rd</option>
+                    <option value="4" ${bedData.expectedCollectionDate == 4 ? 'selected' : ''}>4th</option>
+                    <option value="5" ${bedData.expectedCollectionDate == 5 ? 'selected' : ''}>5th</option>
+                    <option value="6" ${bedData.expectedCollectionDate == 6 ? 'selected' : ''}>6th</option>
+                    <option value="7" ${bedData.expectedCollectionDate == 7 ? 'selected' : ''}>7th</option>
+                    <option value="8" ${bedData.expectedCollectionDate == 8 ? 'selected' : ''}>8th</option>
+                    <option value="9" ${bedData.expectedCollectionDate == 9 ? 'selected' : ''}>9th</option>
+                    <option value="10" ${bedData.expectedCollectionDate == 10 ? 'selected' : ''}>10th</option>
+                    <option value="11" ${bedData.expectedCollectionDate == 11 ? 'selected' : ''}>11th</option>
+                    <option value="12" ${bedData.expectedCollectionDate == 12 ? 'selected' : ''}>12th</option>
+                    <option value="13" ${bedData.expectedCollectionDate == 13 ? 'selected' : ''}>13th</option>
+                    <option value="14" ${bedData.expectedCollectionDate == 14 ? 'selected' : ''}>14th</option>
+                    <option value="15" ${bedData.expectedCollectionDate == 15 ? 'selected' : ''}>15th</option>
+                    <option value="16" ${bedData.expectedCollectionDate == 16 ? 'selected' : ''}>16th</option>
+                    <option value="17" ${bedData.expectedCollectionDate == 17 ? 'selected' : ''}>17th</option>
+                    <option value="18" ${bedData.expectedCollectionDate == 18 ? 'selected' : ''}>18th</option>
+                    <option value="19" ${bedData.expectedCollectionDate == 19 ? 'selected' : ''}>19th</option>
+                    <option value="20" ${bedData.expectedCollectionDate == 20 ? 'selected' : ''}>20th</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label for="editNotes">Notes</label>
                 <textarea id="editNotes" name="notes" rows="3">${bedData.notes}</textarea>
             </div>
@@ -788,6 +941,7 @@ async function updateOccupant(event) {
         deposit: parseInt(formData.get("deposit")) || 0,
         checkInDate: formData.get("checkInDate"),
         checkOutDate: formData.get("checkOutDate"),
+        expectedCollectionDate: formData.get("expectedCollectionDate") || null,
         notes: formData.get("notes")
     };
     
@@ -821,6 +975,7 @@ async function vacateBed() {
         deposit: 0,
         checkInDate: "",
         checkOutDate: "",
+        expectedCollectionDate: null,
         notes: ""
     };
     
@@ -1365,6 +1520,7 @@ async function moveOccupant(sourceBedId, targetBedId) {
             deposit: sourceBedData.deposit,
             checkInDate: sourceBedData.checkInDate,
             checkOutDate: sourceBedData.checkOutDate,
+            expectedCollectionDate: sourceBedData.expectedCollectionDate,
             notes: sourceBedData.notes
         };
         
@@ -1380,6 +1536,7 @@ async function moveOccupant(sourceBedId, targetBedId) {
             deposit: 0,
             checkInDate: "",
             checkOutDate: "",
+            expectedCollectionDate: null,
             notes: ""
         };
         

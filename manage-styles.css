@@ -304,6 +304,16 @@ body {
     color: white;
 }
 
+.bed-transaction-indicator.paid-fallback {
+    background: #3b82f6;
+    color: white;
+}
+
+.bed-transaction-indicator.pending {
+    background: white;
+    color: #f59e0b;
+}
+
 .bed-transaction-indicator.unpaid {
     background: #ef4444;
     color: white;
