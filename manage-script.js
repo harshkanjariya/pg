@@ -2073,6 +2073,8 @@ function viewOccupantDocuments() {
     // Use mobile number as primary identifier, email as secondary
     const phoneNumber = bedData.occupantPhone;
     const emailAddress = bedData.occupantEmail;
+    const occupantName = bedData.occupantName;
+    const bedInfo = `${bedData.room.charAt(0).toUpperCase() + bedData.room.slice(1)} Bed ${bedData.bedNumber}`;
     
     if (!phoneNumber) {
         alert('No mobile number found for this occupant. Please add a mobile number first.');
@@ -2082,10 +2084,15 @@ function viewOccupantDocuments() {
     // Close current modal
     document.getElementById('bedModal').style.display = 'none';
     
-    // Navigate to documents page with pre-filled phone number and email
+    // Navigate to documents page with pre-filled phone number, email, name, and bed info
     let url = `documents.html?phone=${encodeURIComponent(phoneNumber)}`;
     if (emailAddress) {
         url += `&email=${encodeURIComponent(emailAddress)}`;
     }
+    if (occupantName) {
+        url += `&name=${encodeURIComponent(occupantName)}`;
+    }
+    url += `&bed=${encodeURIComponent(bedInfo)}`;
+    
     window.location.href = url;
 }

@@ -270,6 +270,10 @@
                 toggleBtn.classList.add('btn-primary');
                 toggleBtn.classList.remove('btn-secondary');
                 
+                // Check if navigated from manage page with occupant info
+                const nameParam = urlParams.get('name');
+                const bedParam = urlParams.get('bed');
+                
                 // Lookup occupant information if phone number is provided (but don't auto-show form)
                 if (phoneParam) {
                     await lookupOccupantInfo(phoneParam);
@@ -277,6 +281,16 @@
                     const occupantInfoSection = document.getElementById('occupantInfoSection');
                     if (occupantInfoSection) {
                         occupantInfoSection.style.display = 'block';
+                    }
+                    
+                    // Store occupant info for document grouping
+                    if (nameParam) {
+                        window.selectedOccupantInfo = {
+                            name: decodeURIComponent(nameParam),
+                            phone: decodeURIComponent(phoneParam),
+                            email: emailParam ? decodeURIComponent(emailParam) : null,
+                            bed: bedParam ? decodeURIComponent(bedParam) : null
+                        };
                     }
                 }
                 
@@ -341,14 +355,88 @@
                 return;
             }
             
-            documentsList.innerHTML = filteredDocuments.map(doc => `
+            // Check if we have a selected occupant from manage page
+            if (window.selectedOccupantInfo) {
+                renderDocumentsWithGrouping(documentsList);
+            } else {
+                renderDocumentsNormal(documentsList);
+            }
+        }
+        
+        function renderDocumentsWithGrouping(documentsList) {
+            const selectedOccupant = window.selectedOccupantInfo;
+            const selectedOccupantDocs = [];
+            const otherDocs = [];
+            
+            // Separate documents by selected occupant
+            filteredDocuments.forEach(doc => {
+                const isSelectedOccupantDoc = 
+                    (doc.guestPhoneNormalized && selectedOccupant.phone && 
+                     doc.guestPhoneNormalized === selectedOccupant.phone.replace(/\D/g, '').replace(/^91/, '')) ||
+                    (doc.guestEmail && selectedOccupant.email && 
+                     doc.guestEmail.toLowerCase() === selectedOccupant.email.toLowerCase());
+                
+                if (isSelectedOccupantDoc) {
+                    selectedOccupantDocs.push(doc);
+                } else {
+                    otherDocs.push(doc);
+                }
+            });
+            
+            let html = '';
+            
+            // Selected occupant's documents section
+            if (selectedOccupantDocs.length > 0) {
+                html += `
+                    <div class="document-section">
+                        <div class="section-header">
+                            <h3>📄 ${selectedOccupant.name}'s Documents</h3>
+                            <span class="section-count">${selectedOccupantDocs.length} document${selectedOccupantDocs.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="section-documents">
+                            ${selectedOccupantDocs.map(doc => createDocumentItem(doc)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Other documents section
+            if (otherDocs.length > 0) {
+                html += `
+                    <div class="document-section">
+                        <div class="section-header">
+                            <h3>📁 Other Documents</h3>
+                            <span class="section-count">${otherDocs.length} document${otherDocs.length !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div class="section-documents">
+                            ${otherDocs.map(doc => createDocumentItem(doc)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            documentsList.innerHTML = html;
+        }
+        
+        function renderDocumentsNormal(documentsList) {
+            documentsList.innerHTML = `
+                <div class="document-section">
+                    <div class="section-documents">
+                        ${filteredDocuments.map(doc => createDocumentItem(doc)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function createDocumentItem(doc) {
+            return `
                 <div class="document-item">
                     <div class="document-icon">📄</div>
                     <div class="document-info">
                         <div class="document-name">${doc.fileName || doc.originalFileName || 'Unknown File'}</div>
                         <div class="document-meta">
                             <span class="document-type-badge badge-${doc.documentType}">${formatDocumentType(doc.documentType)}</span>
-                            <span>👤 ${doc.guestEmail}</span>
+                            <span>👤 ${doc.guestEmail || 'No email'}</span>
                             <span>📅 ${formatDate(doc.uploadDate)}</span>
                             <span>📏 ${formatFileSize(doc.fileSize)}</span>
                         </div>
@@ -362,7 +450,7 @@
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `;
         }
 
         function formatDocumentType(type) {
