@@ -92,10 +92,14 @@
                         <option value="all">All Transactions</option>
                         <option value="collection">Collection</option>
                         <option value="expense">Expense</option>
+                        <option value="ac_bill">AC Bills</option>
                     </select>
                     <input type="date" id="startDate" onchange="filterTransactions()">
                     <input type="date" id="endDate" onchange="filterTransactions()">
                     <button onclick="addTransaction()" class="btn-primary">Add Transaction</button>
+                </div>
+                <div class="filter-info">
+                    <small>📅 Showing current month by default. Use date filters to view other periods.</small>
                 </div>
             </div>
             

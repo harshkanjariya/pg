@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AC Management - Comfort Stays PG</title>
+    <link rel="stylesheet" href="ac-management-styles.css">
+    <link rel="icon" type="image/png" href="pg-logo.png">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1>❄️ AC Management</h1>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="window.location.href='manage.html'">Back to Management</button>
+                    <button class="btn-secondary" onclick="window.location.href='transactions.html'">View Transactions</button>
+                    <button class="btn-danger" onclick="signOutUser()">Sign Out</button>
+                </div>
+            </div>
+        </header>
+
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="loading-spinner"></div>
+            <p>Loading AC management...</p>
+        </div>
+
+        <!-- AC Summary Cards -->
+        <div class="ac-summary" id="acSummary" style="display: none;">
+            <div class="summary-card ac-card">
+                <div class="summary-icon">❄️</div>
+                <div class="summary-content">
+                    <h3>Current Month AC Bills</h3>
+                    <div class="summary-amount" id="totalACBill">₹0</div>
+                    <div class="summary-details" id="acBillDetails">Total AC charges for current month</div>
+                </div>
+            </div>
+            
+            <div class="summary-card pending-card">
+                <div class="summary-icon">⏳</div>
+                <div class="summary-content">
+                    <h3>Pending Collections</h3>
+                    <div class="summary-amount" id="pendingACCollections">₹0</div>
+                    <div class="summary-details" id="pendingDetails">AC bills not yet collected</div>
+                </div>
+            </div>
+            
+            <div class="summary-card units-card">
+                <div class="summary-icon">📊</div>
+                <div class="summary-content">
+                    <h3>Units Consumed</h3>
+                    <div class="summary-amount" id="totalUnitsConsumed">0</div>
+                    <div class="summary-details" id="unitsDetails">Total units used this month</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AC Room Status -->
+        <div class="ac-rooms-section">
+            <div class="section-header">
+                <h2>🏠 AC Room Status</h2>
+                <div class="room-filters">
+                    <select id="roomFilter" onchange="filterACRooms()">
+                        <option value="all">All AC Rooms</option>
+                    </select>
+                    <button onclick="showAddReadingModal()" class="btn-primary">📝 Add Monthly Reading</button>
+                </div>
+            </div>
+            
+            <div class="ac-rooms-grid" id="acRoomsGrid">
+                <!-- AC rooms will be loaded here -->
+            </div>
+        </div>
+
+        <!-- AC Bill History -->
+        <div class="ac-history-section">
+            <div class="section-header">
+                <h2>📋 AC Bill History</h2>
+                <div class="history-filters">
+                    <select id="historyMonth" onchange="filterACHistory()">
+                        <option value="">Select Month</option>
+                    </select>
+                    <select id="historyRoom" onchange="filterACHistory()">
+                        <option value="all">All AC Rooms</option>
+                        <option value="room1">Room 1 (Bottom)</option>
+                        <option value="room3">Room 3 (Top)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="ac-history-list" id="acHistoryList">
+                <!-- AC bill history will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Reading Modal -->
+    <div id="addReadingModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📝 Add Monthly AC Reading</h3>
+                <span class="close" onclick="closeAddReadingModal()">&times;</span>
+            </div>
+            <form id="addReadingForm" onsubmit="saveACReading(event)">
+                <div class="form-group">
+                    <label for="readingMonth">Month:</label>
+                    <select id="readingMonth" name="month" required>
+                        <option value="">Select Month</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="readingYear">Year:</label>
+                    <input type="number" id="readingYear" name="year" min="2024" max="2030" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="readingDate">Reading Date:</label>
+                    <input type="date" id="readingDate" name="readingDate" required>
+                </div>
+                
+                <div class="ac-readings-section">
+                    <h4>AC Room Readings</h4>
+                    <div class="reading-inputs">
+                        <div class="reading-input">
+                            <label for="room1Previous">Room 1 (Bottom) - Previous Reading:</label>
+                            <input type="number" id="room1Previous" name="room1Previous" min="0" step="1">
+                        </div>
+                        <div class="reading-input">
+                            <label for="room1Current">Room 1 (Bottom) - Current Reading:</label>
+                            <input type="number" id="room1Current" name="room1Current" min="0" step="1" onchange="calculateRoomUnits('room1')">
+                        </div>
+                        <div class="reading-input">
+                            <label for="room1Units">Room 1 Units Consumed:</label>
+                            <input type="number" id="room1Units" name="room1Units" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="reading-inputs">
+                        <div class="reading-input">
+                            <label for="room3Previous">Room 3 (Top) - Previous Reading:</label>
+                            <input type="number" id="room3Previous" name="room3Previous" min="0" step="1">
+                        </div>
+                        <div class="reading-input">
+                            <label for="room3Current">Room 3 (Top) - Current Reading:</label>
+                            <input type="number" id="room3Current" name="room3Current" min="0" step="1" onchange="calculateRoomUnits('room3')">
+                        </div>
+                        <div class="reading-input">
+                            <label for="room3Units">Room 3 Units Consumed:</label>
+                            <input type="number" id="room3Units" name="room3Units" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="readingNotes">Notes (Optional):</label>
+                    <textarea id="readingNotes" name="notes" rows="3" placeholder="Any additional notes about the readings..."></textarea>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" onclick="closeAddReadingModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Reading</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Shared Authentication Module -->
+    <script src="shared-auth.js"></script>
+    
+    <script src="ac-management-script.js"></script>
+</body>
+</html>

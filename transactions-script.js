@@ -14,10 +14,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('loadingIndicator').style.display = 'none';
         document.getElementById('transactionSummary').style.display = 'grid';
         
+        // Set default date filters to current month
+        setCurrentMonthFilters();
+        
         await loadBedsData();
         await loadTransactionsData();
         updateTransactionSummary();
         displayTransactions();
+        
+        // Apply current month filter by default
+        filterTransactions();
     } else {
         // Authentication failed, show error
         document.getElementById('loadingIndicator').innerHTML = `
@@ -28,6 +34,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // Authentication is now handled by shared-auth.js
+
+// Set current month filters
+function setCurrentMonthFilters() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    
+    // First day of current month
+    const firstDay = new Date(year, month, 1);
+    // Last day of current month
+    const lastDay = new Date(year, month + 1, 0);
+    
+    // Format dates as YYYY-MM-DD
+    const startDate = firstDay.toISOString().split('T')[0];
+    const endDate = lastDay.toISOString().split('T')[0];
+    
+    // Set the date inputs
+    document.getElementById('startDate').value = startDate;
+    document.getElementById('endDate').value = endDate;
+}
 
 // Load beds data
 async function loadBedsData() {
@@ -60,23 +86,26 @@ async function loadTransactionsData() {
         });
         
         // Sort by date (newest first)
-        transactionsData.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        console.log('Transactions data loaded:', transactionsData);
+        transactionsData.sort((a, b) => new Date(b.date) - new Date(a.date));        
     } catch (error) {
         console.error("Error loading transactions data:", error);
     }
 }
 
+
 // Update transaction summary
 function updateTransactionSummary() {
+    updateTransactionSummaryWithFilteredData(transactionsData);
+}
+
+// Update transaction summary with filtered data
+function updateTransactionSummaryWithFilteredData(filteredTransactions) {
     let totalExpenses = 0;
     let totalCollections = 0;
-    // Pending amount removed
     let occupiedBeds = 0;
     
-    // Calculate from transactions data
-    transactionsData.forEach(transaction => {
+    // Calculate from filtered transactions data
+    filteredTransactions.forEach(transaction => {
         if (transaction.type === 'expense') {
             totalExpenses += transaction.amount || 0;
         } else if (transaction.type === 'collection') {
@@ -94,9 +123,9 @@ function updateTransactionSummary() {
     // Calculate total potential revenue using hardcoded room pricing
     const roomPricing = {
         hall: 6500,   // Hall - 6 beds sharing
-        room1: 8000,  // Top room - 4 beds sharing  
+        room1: 8000,  // Bottom room - 4 beds sharing  
         room2: 9000,  // Middle room - 3 beds sharing
-        room3: 8000   // Bottom room - 4 beds sharing
+        room3: 8000   // Top room - 4 beds sharing
     };
     
     let totalPotentialRevenue = 0;
@@ -106,15 +135,12 @@ function updateTransactionSummary() {
         totalPotentialRevenue += roomPrice;
     });
     
-    
     // Update UI
     document.getElementById('totalExpenses').textContent = `₹${totalExpenses.toLocaleString()}`;
     document.getElementById('expenseDetails').textContent = 'utilities, maintenance, etc.';
     
     document.getElementById('totalCollections').textContent = `₹${totalCollections.toLocaleString()}`;
     document.getElementById('collectionDetails').textContent = 'rent + deposits collected';
-    
-    // Pending amount card removed - updated
     
     document.getElementById('capacityInfo').textContent = `₹${totalPotentialRevenue.toLocaleString()}`;
     document.getElementById('capacityDetails').textContent = 'total potential revenue';
@@ -158,7 +184,13 @@ function displayTransactions() {
     const transactionList = document.getElementById('transactionList');
     transactionList.innerHTML = '';
     
-    if (transactionsData.length === 0) {
+    // Display only regular transactions
+    const allTransactions = [...transactionsData];
+    
+    // Sort by date (newest first)
+    allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (allTransactions.length === 0) {
         transactionList.innerHTML = `
             <div class="no-transactions">
                 <p>No transactions found. Add some transactions to see them here.</p>
@@ -168,7 +200,7 @@ function displayTransactions() {
         return;
     }
     
-    transactionsData.forEach(transaction => {
+    allTransactions.forEach(transaction => {
         const transactionElement = createTransactionElement(transaction);
         transactionList.appendChild(transactionElement);
     });
@@ -222,6 +254,7 @@ function getTransactionIcon(type) {
     switch(type) {
         case 'collection': return '💰';
         case 'expense': return '💸';
+        case 'ac_bill': return '❄️';
         default: return '📊';
     }
 }
@@ -241,6 +274,7 @@ function getAmountClass(type) {
     switch(type) {
         case 'expense': return 'amount-expense';
         case 'collection': return 'amount-income';
+        case 'ac_bill': return 'amount-ac-bill';
         default: return 'amount-neutral';
     }
 }
@@ -270,7 +304,10 @@ function filterTransactions() {
     const startDate = document.getElementById('startDate').value;
     const endDate = document.getElementById('endDate').value;
     
-    let filteredTransactions = transactionsData;
+    // Filter only regular transactions
+    let allTransactions = [...transactionsData];
+    
+    let filteredTransactions = allTransactions;
     
     // Filter by type
     if (type !== 'all') {
@@ -285,6 +322,9 @@ function filterTransactions() {
     if (endDate) {
         filteredTransactions = filteredTransactions.filter(t => new Date(t.date) <= new Date(endDate));
     }
+    
+    // Update summary with filtered data
+    updateTransactionSummaryWithFilteredData(filteredTransactions);
     
     // Display filtered transactions
     displayFilteredTransactions(filteredTransactions);
@@ -370,6 +410,7 @@ function createTransactionModal() {
                             <option value="">Select Type</option>
                             <option value="collection">Collection (Rent/Deposit)</option>
                             <option value="expense">Expense</option>
+                            <option value="ac_bill">AC Bill</option>
                         </select>
                     </div>
                     
@@ -419,9 +460,18 @@ function populateBedDropdown() {
     
     bedSelect.innerHTML = '<option value="">Select Bed</option>';
     
+    // Get current transaction type
+    const transactionType = document.getElementById('modalTransactionType').value;
+    
     // Add beds from bedsData
     Object.keys(bedsData).forEach(bedId => {
         const bedData = bedsData[bedId];
+        
+        // For AC bills, only show AC rooms (room1 and room3)
+        if (transactionType === 'ac_bill' && bedData.room !== 'room1' && bedData.room !== 'room3') {
+            return;
+        }
+        
         const roomName = bedData.room.charAt(0).toUpperCase() + bedData.room.slice(1);
         const bedNumber = bedData.bedNumber;
         const occupantName = bedData.isOccupied ? ` - ${bedData.occupantName}` : ' - Available';
@@ -439,7 +489,7 @@ function updateTransactionType() {
     const transactionType = document.getElementById('modalTransactionType').value;
     const bedSelectionGroup = document.getElementById('bedSelectionGroup');
     
-    if (transactionType === 'collection') {
+    if (transactionType === 'collection' || transactionType === 'ac_bill') {
         bedSelectionGroup.style.display = 'block';
         // Repopulate dropdown when showing
         populateBedDropdown();
@@ -535,6 +585,9 @@ async function saveTransaction(event) {
         // Update UI
         updateTransactionSummary();
         displayTransactions();
+        
+        // Reapply current filters to show updated data
+        filterTransactions();
         
         // Close modal
         closeTransactionModal();

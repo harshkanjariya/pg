@@ -209,6 +209,24 @@ body {
     margin-right: auto;
 }
 
+.filter-info {
+    width: 100%;
+    text-align: center;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(65, 105, 225, 0.1);
+}
+
+.filter-info small {
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: rgba(65, 105, 225, 0.1);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    display: inline-block;
+}
+
 .section-header h2 {
     margin: 0;
     font-size: 2rem;
@@ -400,6 +418,11 @@ body {
 .amount-expense {
     color: #dc2626;
     background: linear-gradient(135deg, #fee2e2, #fecaca);
+}
+
+.amount-ac-bill {
+    color: #1d4ed8;
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
 }
 
 .amount-neutral {

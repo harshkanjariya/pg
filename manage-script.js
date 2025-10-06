@@ -174,10 +174,6 @@ async function loadTransactionsData() {
             });
         });
         
-        console.log('Loaded transactions:', transactionsData.length);
-        console.log('All transactions:', transactionsData);
-        
-        // Filter current month transactions
         updateCurrentMonthTransactions();
         
     } catch (error) {
@@ -207,15 +203,11 @@ function hasCurrentMonthCollection(bedId) {
 // Update transaction indicators on all beds
 function updateTransactionIndicators() {
     const beds = document.querySelectorAll('.bed');
-    console.log('Updating transaction indicators for', beds.length, 'beds');
-    console.log('Current month transactions:', currentMonthTransactions.length);
-    console.log('Beds data keys:', Object.keys(bedsData));
     
     beds.forEach(bed => {
         const room = bed.getAttribute('data-room');
         const bedNumber = bed.getAttribute('data-bed');
         const bedId = `${room}_bed${bedNumber}`;
-        console.log('Processing bed:', bedId, 'from room:', room, 'bed:', bedNumber);
         
         // Remove existing indicator
         const existingIndicator = bed.querySelector('.bed-transaction-indicator');
@@ -226,7 +218,6 @@ function updateTransactionIndicators() {
         // Only show indicator for occupied beds
         if (bedsData[bedId] && bedsData[bedId].isOccupied) {
             const hasCollection = hasCurrentMonthCollection(bedId);
-            console.log(`Bed ${bedId} is occupied, has collection:`, hasCollection);
             
             if (hasCollection) {
                 // Create paid indicator (green checkmark)
@@ -234,17 +225,14 @@ function updateTransactionIndicators() {
                 indicator.className = 'bed-transaction-indicator paid';
                 indicator.innerHTML = '✓';
                 bed.appendChild(indicator);
-                console.log('Added paid indicator to', bedId);
             } else {
                 // Create unpaid indicator (red X)
                 const indicator = document.createElement('div');
                 indicator.className = 'bed-transaction-indicator unpaid';
                 indicator.innerHTML = '✗';
                 bed.appendChild(indicator);
-                console.log('Added unpaid indicator to', bedId);
             }
         } else {
-            console.log(`Bed ${bedId} is not occupied or not in bedsData`);
         }
     });
 }
@@ -281,9 +269,9 @@ function initializeDefaultBeds() {
     
     // Define correct room pricing
     const roomPricing = {
-        room1: 8000, // Top room - 4 beds sharing
+        room1: 8000, // Bottom room - 4 beds sharing
         room2: 9000, // Middle room - 3 beds sharing
-        room3: 8000, // Bottom room - 4 beds sharing
+        room3: 8000, // Top room - 4 beds sharing
         hall: 6500   // Hall - 6 beds sharing
     };
     
@@ -364,9 +352,9 @@ function updateBedDisplay() {
 // Get default room price based on room type
 function getDefaultRoomPrice(room) {
     const roomPricing = {
-        room1: 8000, // Top room - 4 beds sharing
+        room1: 8000, // Bottom room - 4 beds sharing
         room2: 9000, // Middle room - 3 beds sharing
-        room3: 8000, // Bottom room - 4 beds sharing
+        room3: 8000, // Top room - 4 beds sharing
         hall: 6500   // Hall - 6 beds sharing
     };
     return roomPricing[room] || 6500;
@@ -379,9 +367,9 @@ function ensureAllBedsHaveData() {
     
     // Define correct room pricing
     const roomPricing = {
-        room1: 8000, // Top room - 4 beds sharing
+        room1: 8000, // Bottom room - 4 beds sharing
         room2: 9000, // Middle room - 3 beds sharing
-        room3: 8000, // Bottom room - 4 beds sharing
+        room3: 8000, // Top room - 4 beds sharing
         hall: 6500   // Hall - 6 beds sharing
     };
     
@@ -1151,12 +1139,9 @@ async function loadAndDisplayHistory(startDate, endDate) {
         const historyRef = window.firestoreCollection(window.firebaseDB, "history");
         const snapshot = await window.firestoreGetDocs(historyRef);
         
-        console.log("History snapshot size:", snapshot.size);
-        
         const historyData = {};
         snapshot.forEach((doc) => {
             const data = doc.data();
-            console.log("History entry:", data);
             const bedKey = `${data.room}_bed${data.bedNumber}`;
             
             if (!historyData[bedKey]) {
@@ -1165,9 +1150,6 @@ async function loadAndDisplayHistory(startDate, endDate) {
             historyData[bedKey].push(data);
         });
         
-        console.log("Processed history data:", historyData);
-        
-        // Display historical data on timeline
         displayHistoryOnTimeline(historyData, startDate, endDate);
         
     } catch (error) {
@@ -1176,20 +1158,14 @@ async function loadAndDisplayHistory(startDate, endDate) {
 }
 
 function displayHistoryOnTimeline(historyData, startDate, endDate) {
-    console.log("Displaying history on timeline:", historyData, "Date range:", startDate, "to", endDate);
-    
-    // Create a map to store history bars for each bed
     const bedHistoryMap = {};
     
     Object.keys(historyData).forEach(bedKey => {
         const historyEntries = historyData[bedKey];
-        console.log(`Processing ${bedKey} with ${historyEntries.length} entries`);
-        
+
         historyEntries.forEach(entry => {
-            console.log("Checking entry:", entry);
             // Check if this historical entry overlaps with the selected date range
             if (isDateInRange(entry.checkInDate, entry.actualCheckoutDate || entry.checkOutDate, startDate, endDate)) {
-                console.log("Entry is in range, adding to bed history map");
                 
                 if (!bedHistoryMap[bedKey]) {
                     bedHistoryMap[bedKey] = [];
@@ -1210,13 +1186,7 @@ function isDateInRange(checkInDate, checkOutDate, rangeStart, rangeEnd) {
     const checkOut = new Date(checkOutDate);
     const start = new Date(rangeStart);
     const end = new Date(rangeEnd);
-    
-    console.log(`Date range check: ${checkInDate} to ${checkOutDate} vs ${rangeStart} to ${rangeEnd}`);
-    console.log(`Parsed dates: ${checkIn} to ${checkOut} vs ${start} to ${end}`);
-    
-    // Check if the stay period overlaps with the selected range
     const overlaps = (checkIn <= end && checkOut >= start);
-    console.log(`Overlaps: ${overlaps}`);
     
     return overlaps;
 }
