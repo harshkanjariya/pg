@@ -55,14 +55,25 @@
             </div>
         </div>
 
+        <!-- Fair Calculation Info -->
+        <div class="fair-calculation-info">
+            <div class="info-card">
+                <div class="info-icon">⚖️</div>
+                <div class="info-content">
+                    <h3>Fair AC Calculation</h3>
+                    <p>AC bills are now calculated based on actual occupancy days rather than simple per-person division. Each occupant pays their fair share based on how many days they stayed in the room during the billing period.</p>
+                    <div class="example-scenario">
+                        <strong>Example:</strong> If someone joins on the 15th and another leaves on the 20th, they only pay for the days they actually occupied the room.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- AC Room Status -->
         <div class="ac-rooms-section">
             <div class="section-header">
                 <h2>🏠 AC Room Status</h2>
                 <div class="room-filters">
-                    <select id="roomFilter" onchange="filterACRooms()">
-                        <option value="all">All AC Rooms</option>
-                    </select>
                     <button onclick="showAddReadingModal()" class="btn-primary">📝 Add Monthly Reading</button>
                 </div>
             </div>

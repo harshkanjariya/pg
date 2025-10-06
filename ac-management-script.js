@@ -169,7 +169,7 @@ function updateACSummary() {
     document.getElementById('unitsDetails').textContent = 'Total units used this month';
 }
 
-// Get current month data
+// Get current month data with fair calculation
 function getCurrentMonthData() {
     const currentReading = acReadingsData.find(reading => 
         reading.month === currentMonth && reading.year === currentYear
@@ -187,21 +187,112 @@ function getCurrentMonthData() {
         const currentUnits = currentReading[`${roomId}Current`] || 0;
         const previousUnits = previousReading || 0;
         const unitsConsumed = Math.max(0, currentUnits - previousUnits);
-        const occupiedBeds = getOccupiedBedsInRoom(roomId);
         const totalBill = unitsConsumed * AC_RATE_PER_UNIT;
-        const perPersonBill = occupiedBeds > 0 ? totalBill / occupiedBeds : 0;
+        
+        // Get fair calculation data
+        const fairCalculation = calculateFairACDistribution(roomId, currentMonth, currentYear, totalBill);
         
         data[roomId] = {
             unitsConsumed,
             totalBill,
-            perPersonBill,
-            occupiedBeds,
+            perPersonBill: fairCalculation.averagePerPerson, // Keep for backward compatibility
+            occupiedBeds: fairCalculation.totalOccupants,
             currentUnits,
-            previousUnits
+            previousUnits,
+            fairCalculation: fairCalculation // New detailed calculation
         };
     });
     
     return data;
+}
+
+// Calculate fair AC distribution based on occupancy days
+function calculateFairACDistribution(roomId, month, year, totalBill) {
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0); // Last day of month
+    const totalDaysInMonth = monthEnd.getDate();
+    
+    const occupants = [];
+    let totalOccupancyDays = 0;
+    
+    // Get all beds in this room
+    Object.keys(bedsData).forEach(bedId => {
+        const bed = bedsData[bedId];
+        if (bed.room === roomId && bed.isOccupied) {
+            const occupancyDays = calculateOccupancyDaysInMonth(bed, month, year);
+            
+            if (occupancyDays > 0) {
+                occupants.push({
+                    bedId: bedId,
+                    occupantName: bed.occupantName,
+                    checkInDate: bed.checkInDate,
+                    checkOutDate: bed.checkOutDate,
+                    occupancyDays: occupancyDays,
+                    isPermanent: !bed.checkOutDate || bed.checkOutDate === ''
+                });
+                totalOccupancyDays += occupancyDays;
+            }
+        }
+    });
+    
+    // Calculate fair share for each occupant
+    const fairShares = occupants.map(occupant => {
+        const fairShare = totalOccupancyDays > 0 ? 
+            (occupant.occupancyDays / totalOccupancyDays) * totalBill : 0;
+        
+        return {
+            ...occupant,
+            fairShare: fairShare,
+            dailyRate: occupant.occupancyDays > 0 ? fairShare / occupant.occupancyDays : 0
+        };
+    });
+    
+    return {
+        totalOccupants: occupants.length,
+        totalOccupancyDays: totalOccupancyDays,
+        totalDaysInMonth: totalDaysInMonth,
+        averagePerPerson: occupants.length > 0 ? totalBill / occupants.length : 0, // For backward compatibility
+        fairShares: fairShares,
+        dailyRatePerUnit: totalOccupancyDays > 0 ? totalBill / totalOccupancyDays : 0
+    };
+}
+
+// Calculate how many days an occupant stayed in a specific month
+function calculateOccupancyDaysInMonth(bed, month, year) {
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0); // Last day of month
+    
+    let occupancyStart, occupancyEnd;
+    
+    // Determine occupancy start date
+    if (bed.checkInDate) {
+        occupancyStart = new Date(bed.checkInDate);
+    } else {
+        // If no check-in date, assume they were there from start of month
+        occupancyStart = monthStart;
+    }
+    
+    // Determine occupancy end date
+    if (bed.checkOutDate && bed.checkOutDate !== '') {
+        occupancyEnd = new Date(bed.checkOutDate);
+    } else {
+        // If no checkout date, assume they're still there (permanent)
+        occupancyEnd = monthEnd;
+    }
+    
+    // Adjust dates to fit within the month
+    const effectiveStart = occupancyStart < monthStart ? monthStart : occupancyStart;
+    const effectiveEnd = occupancyEnd > monthEnd ? monthEnd : occupancyEnd;
+    
+    // Calculate days
+    if (effectiveStart > effectiveEnd) {
+        return 0; // No overlap with the month
+    }
+    
+    const timeDiff = effectiveEnd.getTime() - effectiveStart.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+    
+    return Math.max(0, daysDiff);
 }
 
 // Get previous reading for a room
@@ -309,6 +400,32 @@ function createACRoomCard(roomId, room, monthData) {
                 <div class="bill-amount">₹${monthData.totalBill.toLocaleString()}</div>
                 <div class="bill-per-person">₹${monthData.perPersonBill.toFixed(0)} per person (${monthData.occupiedBeds} occupants)</div>
             </div>
+            
+            <div class="fair-calculation">
+                <div class="calculation-title">📊 Fair Calculation Breakdown</div>
+                <div class="calculation-summary">
+                    <div class="summary-row">
+                        <span class="summary-label">Total Occupancy Days:</span>
+                        <span class="summary-value">${monthData.fairCalculation.totalOccupancyDays} days</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Daily Rate:</span>
+                        <span class="summary-value">₹${monthData.fairCalculation.dailyRatePerUnit.toFixed(2)}/day</span>
+                    </div>
+                </div>
+                <div class="occupant-breakdown">
+                    ${monthData.fairCalculation.fairShares.map(occupant => `
+                        <div class="occupant-item">
+                            <div class="occupant-name">${occupant.occupantName}</div>
+                            <div class="occupant-details">
+                                <span class="occupancy-days">${occupant.occupancyDays} days</span>
+                                <span class="fair-share">₹${occupant.fairShare.toFixed(0)}</span>
+                                <span class="occupancy-period">${formatOccupancyPeriod(occupant.checkInDate, occupant.checkOutDate, occupant.isPermanent)}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
         `;
     } else {
         cardContent += `
@@ -380,6 +497,11 @@ function displayACHistory() {
             <div class="history-header">
                 <div class="history-month">${monthName}</div>
                 <div class="history-date">Reading Date: ${formatDate(firstReading.readingDate)}</div>
+                <div class="history-actions">
+                    <button onclick="editHistoryReading('${firstReading.id}')" class="btn-edit-history" title="Edit this month's readings">
+                        ✏️ Edit
+                    </button>
+                </div>
             </div>
             <div class="history-rooms">
         `;
@@ -543,7 +665,20 @@ function formatDate(dateString) {
     });
 }
 
-// Create AC bills for reading
+// Format occupancy period for display
+function formatOccupancyPeriod(checkInDate, checkOutDate, isPermanent) {
+    if (isPermanent) {
+        return `Since ${formatDate(checkInDate)} (Permanent)`;
+    } else if (checkInDate && checkOutDate) {
+        return `${formatDate(checkInDate)} - ${formatDate(checkOutDate)}`;
+    } else if (checkInDate) {
+        return `Since ${formatDate(checkInDate)}`;
+    } else {
+        return 'Full month';
+    }
+}
+
+// Create AC bills for reading using fair calculation
 async function createACBillsForReading(readingData, readingId) {
     try {
         Object.keys(AC_ROOMS).forEach(async (roomId) => {
@@ -552,44 +687,290 @@ async function createACBillsForReading(readingData, readingId) {
             const unitsConsumed = Math.max(0, currentUnits - previousReading);
             
             if (unitsConsumed > 0) {
-                const occupiedBeds = getOccupiedBedsInRoom(roomId);
                 const totalBill = unitsConsumed * AC_RATE_PER_UNIT;
-                const perPersonBill = occupiedBeds > 0 ? totalBill / occupiedBeds : 0;
                 
-                // Create individual AC bills for each occupied bed
-                Object.keys(bedsData).forEach(async (bedId) => {
-                    const bed = bedsData[bedId];
-                    if (bed.room === roomId && bed.isOccupied) {
-                        const acBillData = {
-                            readingId: readingId,
-                            roomId: roomId,
-                            roomName: AC_ROOMS[roomId].name,
-                            bedId: bedId,
-                            occupantName: bed.occupantName,
-                            occupantPhone: bed.occupantPhone,
-                            month: readingData.month,
-                            year: readingData.year,
-                            unitsConsumed: unitsConsumed,
-                            totalBill: totalBill,
-                            perPersonBill: perPersonBill,
-                            amount: perPersonBill,
-                            status: 'pending',
-                            createdAt: new Date().toISOString()
-                        };
-                        
-                        const acBillId = `ac_bill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-                        
-                        // Save to Firestore
-                        await window.firestoreSetDoc(window.firestoreDoc(window.firebaseDB, 'ac-bills', acBillId), acBillData);
-                        
-                        // Add to local data
-                        acBillsData.push({...acBillData, id: acBillId});
-                    }
+                // Get fair calculation for this room
+                const fairCalculation = calculateFairACDistribution(roomId, readingData.month, readingData.year, totalBill);
+                
+                // Create individual AC bills for each occupant based on fair share
+                fairCalculation.fairShares.forEach(async (occupant) => {
+                    const acBillData = {
+                        readingId: readingId,
+                        roomId: roomId,
+                        roomName: AC_ROOMS[roomId].name,
+                        bedId: occupant.bedId,
+                        occupantName: occupant.occupantName,
+                        occupantPhone: bedsData[occupant.bedId].occupantPhone,
+                        month: readingData.month,
+                        year: readingData.year,
+                        unitsConsumed: unitsConsumed,
+                        totalBill: totalBill,
+                        occupancyDays: occupant.occupancyDays,
+                        fairShare: occupant.fairShare,
+                        dailyRate: occupant.dailyRate,
+                        isPermanent: occupant.isPermanent,
+                        checkInDate: occupant.checkInDate,
+                        checkOutDate: occupant.checkOutDate,
+                        amount: occupant.fairShare, // Use fair share as the amount
+                        status: 'pending',
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    const acBillId = `ac_bill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    
+                    // Save to Firestore
+                    await window.firestoreSetDoc(window.firestoreDoc(window.firebaseDB, 'ac-bills', acBillId), acBillData);
+                    
+                    // Add to local data
+                    acBillsData.push({...acBillData, id: acBillId});
                 });
             }
         });
     } catch (error) {
         console.error('Error creating AC bills:', error);
+    }
+}
+
+// Edit history reading
+function editHistoryReading(readingId) {
+    const reading = acReadingsData.find(r => r.id === readingId);
+    if (!reading) {
+        alert('Reading not found!');
+        return;
+    }
+    
+    // Show confirmation dialog
+    const monthName = new Date(reading.year, reading.month).toLocaleDateString('en-IN', { 
+        month: 'long', 
+        year: 'numeric' 
+    });
+    
+    if (!confirm(`Are you sure you want to edit the AC readings for ${monthName}?\n\nThis will recalculate all AC bills for this month.`)) {
+        return;
+    }
+    
+    showEditReadingModal(reading);
+}
+
+// Show edit reading modal
+function showEditReadingModal(reading) {
+    const modal = document.getElementById('editReadingModal');
+    if (!modal) {
+        createEditReadingModal();
+    }
+    
+    // Populate form with existing data
+    document.getElementById('editReadingMonth').value = reading.month;
+    document.getElementById('editReadingYear').value = reading.year;
+    document.getElementById('editReadingDate').value = reading.readingDate;
+    document.getElementById('editReadingNotes').value = reading.notes || '';
+    
+    // Populate room readings
+    Object.keys(AC_ROOMS).forEach(roomId => {
+        document.getElementById(`edit${roomId}Previous`).value = reading[`${roomId}Previous`] || 0;
+        document.getElementById(`edit${roomId}Current`).value = reading[`${roomId}Current`] || 0;
+        document.getElementById(`edit${roomId}Units`).value = reading[`${roomId}Units`] || 0;
+    });
+    
+    // Store reading ID for saving
+    document.getElementById('editReadingModal').setAttribute('data-reading-id', reading.id);
+    
+    // Show modal
+    document.getElementById('editReadingModal').style.display = 'flex';
+}
+
+// Create edit reading modal
+function createEditReadingModal() {
+    const modalHTML = `
+        <div id="editReadingModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>✏️ Edit AC Reading</h3>
+                    <span class="close" onclick="closeEditReadingModal()">&times;</span>
+                </div>
+                <form id="editReadingForm" onsubmit="saveEditedReading(event)">
+                    <div class="form-group">
+                        <label for="editReadingMonth">Month:</label>
+                        <select id="editReadingMonth" name="month" required>
+                            <option value="">Select Month</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editReadingYear">Year:</label>
+                        <input type="number" id="editReadingYear" name="year" min="2024" max="2030" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editReadingDate">Reading Date:</label>
+                        <input type="date" id="editReadingDate" name="readingDate" required>
+                    </div>
+                    
+                    <div class="ac-readings-section">
+                        <h4>AC Room Readings</h4>
+                        <div class="reading-inputs">
+                            <div class="reading-input">
+                                <label for="editroom1Previous">Room 1 (Bottom) - Previous Reading:</label>
+                                <input type="number" id="editroom1Previous" name="room1Previous" min="0" step="1">
+                            </div>
+                            <div class="reading-input">
+                                <label for="editroom1Current">Room 1 (Bottom) - Current Reading:</label>
+                                <input type="number" id="editroom1Current" name="room1Current" min="0" step="1" onchange="calculateEditRoomUnits('room1')">
+                            </div>
+                            <div class="reading-input">
+                                <label for="editroom1Units">Room 1 Units Consumed:</label>
+                                <input type="number" id="editroom1Units" name="room1Units" readonly>
+                            </div>
+                        </div>
+                        
+                        <div class="reading-inputs">
+                            <div class="reading-input">
+                                <label for="editroom3Previous">Room 3 (Top) - Previous Reading:</label>
+                                <input type="number" id="editroom3Previous" name="room3Previous" min="0" step="1">
+                            </div>
+                            <div class="reading-input">
+                                <label for="editroom3Current">Room 3 (Top) - Current Reading:</label>
+                                <input type="number" id="editroom3Current" name="room3Current" min="0" step="1" onchange="calculateEditRoomUnits('room3')">
+                            </div>
+                            <div class="reading-input">
+                                <label for="editroom3Units">Room 3 Units Consumed:</label>
+                                <input type="number" id="editroom3Units" name="room3Units" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editReadingNotes">Notes (Optional):</label>
+                        <textarea id="editReadingNotes" name="notes" rows="3" placeholder="Any additional notes about the readings..."></textarea>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" onclick="closeEditReadingModal()" class="btn-secondary">Cancel</button>
+                        <button type="submit" class="btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Initialize month dropdown
+    const months = [
+        'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    
+    const monthSelect = document.getElementById('editReadingMonth');
+    months.forEach((month, index) => {
+        const option = new Option(month, index);
+        monthSelect.add(option);
+    });
+}
+
+// Calculate room units for edit modal
+function calculateEditRoomUnits(roomId) {
+    const previousInput = document.getElementById(`edit${roomId}Previous`);
+    const currentInput = document.getElementById(`edit${roomId}Current`);
+    const unitsInput = document.getElementById(`edit${roomId}Units`);
+    
+    const previous = parseFloat(previousInput.value) || 0;
+    const current = parseFloat(currentInput.value) || 0;
+    const units = Math.max(0, current - previous);
+    
+    unitsInput.value = units;
+}
+
+// Close edit reading modal
+function closeEditReadingModal() {
+    document.getElementById('editReadingModal').style.display = 'none';
+}
+
+// Save edited reading
+async function saveEditedReading(event) {
+    event.preventDefault();
+    
+    const readingId = document.getElementById('editReadingModal').getAttribute('data-reading-id');
+    if (!readingId) {
+        alert('Error: Reading ID not found!');
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const readingData = {
+        month: parseInt(formData.get('month')),
+        year: parseInt(formData.get('year')),
+        readingDate: formData.get('readingDate'),
+        notes: formData.get('notes') || '',
+        updatedAt: new Date().toISOString()
+    };
+    
+    // Add room readings
+    Object.keys(AC_ROOMS).forEach(roomId => {
+        readingData[`${roomId}Previous`] = parseFloat(formData.get(`${roomId}Previous`)) || 0;
+        readingData[`${roomId}Current`] = parseFloat(formData.get(`${roomId}Current`)) || 0;
+        readingData[`${roomId}Units`] = parseFloat(formData.get(`${roomId}Units`)) || 0;
+    });
+    
+    try {
+        // Show loading
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
+        
+        // Update in Firestore
+        await window.firestoreSetDoc(window.firestoreDoc(window.firebaseDB, 'ac-readings', readingId), readingData);
+        
+        // Update local data
+        const readingIndex = acReadingsData.findIndex(r => r.id === readingId);
+        if (readingIndex !== -1) {
+            acReadingsData[readingIndex] = {...acReadingsData[readingIndex], ...readingData};
+        }
+        
+        // Delete old AC bills for this reading
+        await deleteACBillsForReading(readingId);
+        
+        // Create new AC bills with updated readings
+        await createACBillsForReading(readingData, readingId);
+        
+        // Update UI
+        updateACSummary();
+        displayACRooms();
+        displayACHistory();
+        
+        // Close modal
+        closeEditReadingModal();
+        
+        // Show success message
+        alert('AC reading updated successfully! All bills have been recalculated.');
+        
+    } catch (error) {
+        console.error('Error updating AC reading:', error);
+        alert('Failed to update AC reading. Please try again.');
+        
+        // Reset button
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Save Changes';
+    }
+}
+
+// Delete AC bills for a specific reading
+async function deleteACBillsForReading(readingId) {
+    try {
+        const billsToDelete = acBillsData.filter(bill => bill.readingId === readingId);
+        
+        for (const bill of billsToDelete) {
+            await window.firestoreDeleteDoc(window.firestoreDoc(window.firebaseDB, 'ac-bills', bill.id));
+        }
+        
+        // Update local data
+        acBillsData = acBillsData.filter(bill => bill.readingId !== readingId);
+        
+    } catch (error) {
+        console.error('Error deleting AC bills:', error);
+        throw error;
     }
 }
 
