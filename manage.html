@@ -267,6 +267,33 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Control Section -->
+            <div class="controls-section" style="margin-top: 24px; display: grid; gap: 16px;">
+                <!-- Transaction Control -->
+                <div class="transaction-controls" style="padding: 20px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <input type="checkbox" id="showTransactionsToggle" onchange="toggleTransactionDisplay()" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="showTransactionsToggle" style="font-weight: 600; color: #1e293b; cursor: pointer; font-size: 16px;">Show Transaction Status & Payment Details</label>
+                    </div>
+                    <p style="font-size: 14px; color: #64748b; margin: 0; line-height: 1.5;">
+                        When enabled, this will load and display payment status icons (✓ paid, ⏰ pending, ✗ unpaid) and show rent + deposit amounts on each bed. 
+                        <span style="color: #3b82f6; font-weight: 500;">Note: This feature loads data from your transactions database.</span>
+                    </p>
+                </div>
+                
+                <!-- Document Verification Control -->
+                <div class="document-controls" style="padding: 20px; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 16px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);">
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <input type="checkbox" id="showDocumentsToggle" onchange="toggleDocumentVerification()" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="showDocumentsToggle" style="font-weight: 600; color: #1e293b; cursor: pointer; font-size: 16px;">Show Document Verification Status</label>
+                    </div>
+                    <p style="font-size: 14px; color: #64748b; margin: 0; line-height: 1.5;">
+                        When enabled, this will display verified icons (✓) for occupants who have uploaded documents to the documents management system. 
+                        <span style="color: #10b981; font-weight: 500;">Note: This feature loads data from your documents database.</span>
+                    </p>
+                </div>
+            </div>
         </main>
     </div>
 

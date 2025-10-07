@@ -19,9 +19,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         
         console.log('Authentication successful, initializing timeline...');
         
-        // Load bed data and transactions
+        // Load bed data only (transactions will be loaded when checkbox is checked)
         await loadBedsData();
-        await loadTransactionsData();
         
         // Show apartment layout
         const apartmentLayout = document.getElementById('apartmentLayout');
@@ -30,10 +29,9 @@ document.addEventListener("DOMContentLoaded", async function() {
             console.log('Apartment layout shown');
         }
         
-        // Update bed display and transaction indicators
+        // Update bed display without transaction indicators initially
         updateBedDisplay();
-        updateTransactionIndicators();
-        console.log('Bed display and transaction indicators updated');
+        console.log('Bed display updated (transactions will load when checkbox is checked)');
         
         // Authentication successful, initialize timeline
         initializeTimeline();
@@ -259,6 +257,13 @@ function hasExpectedCollectionDatePassed(bedData) {
 
 // Update transaction indicators on all beds
 function updateTransactionIndicators() {
+    const showTransactions = document.getElementById('showTransactionsToggle')?.checked || false;
+    
+    // Only proceed if transactions are enabled
+    if (!showTransactions) {
+        return;
+    }
+    
     const beds = document.querySelectorAll('.bed');
     
     beds.forEach(bed => {
@@ -306,7 +311,6 @@ function updateTransactionIndicators() {
                 indicator.title = 'Collection not received';
                 bed.appendChild(indicator);
             }
-        } else {
         }
     });
 }
@@ -376,6 +380,8 @@ function initializeDefaultBeds() {
 
 // Update bed display based on data
 function updateBedDisplay() {
+    const showTransactions = document.getElementById('showTransactionsToggle')?.checked || false;
+    
     Object.keys(bedsData).forEach(bedId => {
         const bedData = bedsData[bedId];
         const bedElement = document.querySelector(`[data-room="${bedData.room}"][data-bed="${bedData.bedNumber}"]`);
@@ -399,15 +405,32 @@ function updateBedDisplay() {
             if (bedData.isOccupied) {
                 const status = getBedStatus(bedData);
                 bedElement.classList.add(status);
+                
+                // Set occupant name (document verification is handled separately)
                 bedElement.querySelector(".occupant-name").textContent = bedData.occupantName;
-                bedElement.querySelector(".bed-price").textContent = `₹${bedData.price}`;
-                if (bedData.deposit > 0) {
-                    bedElement.querySelector(".bed-price").textContent += ` + ₹${bedData.deposit}`;
+                
+                // Show amounts only if transactions are enabled
+                if (showTransactions) {
+                    bedElement.querySelector(".bed-price").textContent = `₹${bedData.price}`;
+                    if (bedData.deposit > 0) {
+                        bedElement.querySelector(".bed-price").textContent += ` + ₹${bedData.deposit}`;
+                    }
+                    bedElement.querySelector(".bed-price").style.display = 'block';
+                } else {
+                    // Hide the price element completely when transactions are not enabled
+                    bedElement.querySelector(".bed-price").style.display = 'none';
                 }
             } else {
                 bedElement.classList.add('empty');
                 bedElement.querySelector(".occupant-name").textContent = "Available";
-                bedElement.querySelector(".bed-price").textContent = `₹${bedData.price}`;
+                
+                // Show price for available beds only if transactions are enabled
+                if (showTransactions) {
+                    bedElement.querySelector(".bed-price").textContent = `₹${bedData.price}`;
+                    bedElement.querySelector(".bed-price").style.display = 'block';
+                } else {
+                    bedElement.querySelector(".bed-price").style.display = 'none';
+                }
             }
         } else {
             console.error(`Could not find bed element for ${bedId} with room="${bedData.room}" bed="${bedData.bedNumber}"`);
@@ -420,8 +443,15 @@ function updateBedDisplay() {
     // Update deposit summary
     updateDepositSummary();
     
-    // Update transaction indicators
-    updateTransactionIndicators();
+    // Update transaction indicators only if transactions are enabled
+    if (showTransactions) {
+        updateTransactionIndicators();
+    } else {
+        // Remove all transaction indicators
+        document.querySelectorAll('.bed-transaction-indicator').forEach(indicator => {
+            indicator.remove();
+        });
+    }
 }
 
 // Get default room price based on room type
@@ -1006,6 +1036,126 @@ function goBack() {
 }
 
 // Sign out is now handled by shared-auth.js
+
+// Check if occupant has documents uploaded (for verification icon)
+async function checkOccupantHasDocuments(occupantPhone, occupantEmail) {
+    try {
+        // Normalize phone number for matching
+        let normalizedPhone = occupantPhone.replace(/\D/g, '');
+        if (normalizedPhone.startsWith('91') && normalizedPhone.length === 12) {
+            normalizedPhone = normalizedPhone.substring(2);
+        } else if (normalizedPhone.startsWith('91') && normalizedPhone.length === 13) {
+            normalizedPhone = normalizedPhone.substring(3);
+        }
+        
+        const documentsRef = window.firestoreCollection(window.firebaseDB, 'guest-documents');
+        const snapshot = await window.firestoreGetDocs(documentsRef);
+        
+        let hasDocuments = false;
+        
+        snapshot.forEach(doc => {
+            const documentData = doc.data();
+            
+            // Check if phone number matches in guestPhoneNormalized field
+            if (documentData.guestPhoneNormalized === normalizedPhone ||
+                documentData.guestPhoneNormalized === occupantPhone) {
+                hasDocuments = true;
+            }
+            
+            // Also check if guestEmail matches (for backward compatibility)
+            if (documentData.guestEmail === occupantEmail || 
+                documentData.guestEmail === occupantPhone ||
+                documentData.guestEmail === normalizedPhone) {
+                hasDocuments = true;
+            }
+            
+            // Also check if guestEmail contains the phone number (in case it's stored as phone@domain)
+            if (documentData.guestEmail && documentData.guestEmail.includes(occupantPhone)) {
+                hasDocuments = true;
+            }
+            
+            // Check if guestEmail contains normalized phone
+            if (documentData.guestEmail && documentData.guestEmail.includes(normalizedPhone)) {
+                hasDocuments = true;
+            }
+        });
+        
+        return hasDocuments;
+    } catch (error) {
+        console.error('Error checking occupant documents:', error);
+        return false;
+    }
+}
+
+// Toggle transaction display based on checkbox state
+async function toggleTransactionDisplay() {
+    const checkbox = document.getElementById('showTransactionsToggle');
+    const showTransactions = checkbox.checked;
+    
+    if (showTransactions) {
+        // Load transactions data if not already loaded
+        if (transactionsData.length === 0) {
+            await loadTransactionsData();
+        }
+        
+        // Update bed display with transaction indicators and amounts
+        updateBedDisplay();
+    } else {
+        // Remove transaction indicators and hide all amounts
+        document.querySelectorAll('.bed-transaction-indicator').forEach(indicator => {
+            indicator.remove();
+        });
+        
+        // Hide all bed prices
+        document.querySelectorAll('.bed-price').forEach(priceElement => {
+            priceElement.style.display = 'none';
+        });
+        
+        // Update bed display without transaction indicators and amounts
+        updateBedDisplay();
+    }
+}
+
+// Toggle document verification display based on checkbox state
+async function toggleDocumentVerification() {
+    const checkbox = document.getElementById('showDocumentsToggle');
+    const showDocuments = checkbox.checked;
+    
+    if (showDocuments) {
+        // Show verified icons for occupants with documents
+        await updateDocumentVerification();
+    } else {
+        // Remove verified icons by resetting occupant names to plain text
+        document.querySelectorAll('.occupant-name').forEach(nameElement => {
+            const textContent = nameElement.textContent || nameElement.innerText;
+            if (textContent) {
+                nameElement.innerHTML = textContent;
+            }
+        });
+    }
+}
+
+// Update document verification for all occupied beds
+async function updateDocumentVerification() {
+    Object.keys(bedsData).forEach(bedId => {
+        const bedData = bedsData[bedId];
+        
+        if (bedData.isOccupied && bedData.occupantPhone) {
+            const bedElement = document.querySelector(`[data-room="${bedData.room}"][data-bed="${bedData.bedNumber}"]`);
+            if (bedElement) {
+                const occupantNameElement = bedElement.querySelector(".occupant-name");
+                
+                checkOccupantHasDocuments(bedData.occupantPhone, bedData.occupantEmail).then(hasDocuments => {
+                    if (hasDocuments) {
+                        occupantNameElement.innerHTML = `<span class="verified-icon" title="Documents uploaded">✓</span> ${bedData.occupantName}`;
+                    } else {
+                        occupantNameElement.textContent = bedData.occupantName;
+                    }
+                });
+            }
+        }
+    });
+}
 
 // Close modal when clicking outside
 window.onclick = function(event) {
@@ -1977,7 +2127,7 @@ async function uploadDocument() {
                         uploadedBy: firebase.auth().currentUser.email
                     };
                     
-                    await db.collection('documents').add(documentData);
+                    await db.collection('guest-documents').add(documentData);
                     
                     // Complete progress
                     progressFill.style.width = '100%';
@@ -2014,7 +2164,7 @@ async function uploadDocument() {
 async function getGuestDocuments(guestEmail) {
     try {
         const db = firebase.firestore();
-        const documentsRef = db.collection('documents')
+        const documentsRef = db.collection('guest-documents')
             .where('guestEmail', '==', guestEmail)
             .orderBy('uploadDate', 'desc');
         
@@ -2050,7 +2200,7 @@ async function deleteDocument(documentId, fileName) {
         
         // Delete from Firestore
         const db = firebase.firestore();
-        await db.collection('documents').doc(documentId).delete();
+        await db.collection('guest-documents').doc(documentId).delete();
         
         alert('Document deleted successfully!');
         
