@@ -93,10 +93,12 @@ async function checkOwnerAuthentication() {
         }
 
         // Check if user is the owner
-        const ownerEmail = 'harshkanjariya.official@gmail.com';
-        console.log('Checking owner email:', user.email, '===', ownerEmail);
+        const allowedEmails = [
+            'harshkanjariya.official@gmail.com',
+            'code.harshkanjariya@gmail.com'
+        ];
         
-        if (user.email !== ownerEmail) {
+        if (!allowedEmails.includes(user.email)) {
             console.log('Access denied - not owner');
             return { authenticated: false, user: user, reason: 'not_owner' };
         }
@@ -253,7 +255,11 @@ async function initializeLandingPage() {
         onAuthStateChanged((user) => {
             if (user) {
                 // User is signed in
-                if (user.email === 'harshkanjariya.official@gmail.com') {
+                const allowedEmails = [
+                    'harshkanjariya.official@gmail.com',
+                    'code.harshkanjariya@gmail.com'
+                ];
+                if (allowedEmails.includes(user.email)) {
                     showOwnerControls();
                 } else {
                     showGuestMessage();
