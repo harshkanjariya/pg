@@ -11,7 +11,7 @@ async function initializeFirebase() {
         // Import Firebase modules
         const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js");
         const { getFirestore, collection, doc, getDocs, setDoc, updateDoc, deleteDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-        const { getAuth, signOut, GoogleAuthProvider, signInWithPopup } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
+        const { getAuth, signOut, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js");
         const { getStorage, ref, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject, listAll } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js");
 
         // Firebase configuration

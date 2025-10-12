@@ -136,13 +136,13 @@ function updateTransactionSummaryWithFilteredData(filteredTransactions) {
     });
     
     // Update UI
-    document.getElementById('totalExpenses').textContent = `₹${totalExpenses.toLocaleString()}`;
+    document.getElementById('totalExpenses').textContent = `₹${totalExpenses.toFixed(1)}`;
     document.getElementById('expenseDetails').textContent = 'utilities, maintenance, etc.';
     
-    document.getElementById('totalCollections').textContent = `₹${totalCollections.toLocaleString()}`;
+    document.getElementById('totalCollections').textContent = `₹${totalCollections.toFixed(1)}`;
     document.getElementById('collectionDetails').textContent = 'rent + deposits collected';
     
-    document.getElementById('capacityInfo').textContent = `₹${totalPotentialRevenue.toLocaleString()}`;
+    document.getElementById('capacityInfo').textContent = `₹${totalPotentialRevenue.toFixed(1)}`;
     document.getElementById('capacityDetails').textContent = 'total potential revenue';
     
     // Update profit/loss calculation
@@ -151,32 +151,22 @@ function updateTransactionSummaryWithFilteredData(filteredTransactions) {
 
 // Update profit/loss calculation
 function updateProfitLossCalculation(totalCollections, totalExpenses) {
-    // Calculate cook salary (you can modify this logic as needed)
-    // For now, let's assume cook salary is a fixed amount or calculate from expenses
-    const cookSalary = calculateCookSalary(totalExpenses);
-    
     // Calculate net result
-    const netResult = totalCollections - totalExpenses - cookSalary;
+    const netResult = totalCollections - totalExpenses;
     
     // Update display
-    document.getElementById('totalCollectionDisplay').textContent = `₹${totalCollections.toLocaleString()}`;
-    document.getElementById('totalExpenseDisplay').textContent = `₹${totalExpenses.toLocaleString()}`;
-    document.getElementById('cookSalaryDisplay').textContent = `₹${cookSalary.toLocaleString()}`;
+    document.getElementById('totalCollectionDisplay').textContent = `₹${totalCollections.toFixed(1)}`;
+    document.getElementById('totalExpenseDisplay').textContent = `₹${totalExpenses.toFixed(1)}`;
     
     // Update net result with color coding
     const netResultElement = document.getElementById('netResultDisplay');
     if (netResult >= 0) {
-        netResultElement.textContent = `+₹${netResult.toLocaleString()} (Profit)`;
+        netResultElement.textContent = `+₹${netResult.toFixed(1)} (Profit)`;
         netResultElement.style.color = '#10b981'; // Green for profit
     } else {
-        netResultElement.textContent = `₹${netResult.toLocaleString()} (Loss)`;
+        netResultElement.textContent = `₹${netResult.toFixed(1)} (Loss)`;
         netResultElement.style.color = '#ef4444'; // Red for loss
     }
-}
-
-// Calculate cook salary (you can modify this logic)
-function calculateCookSalary(totalExpenses) {
-    return 15000;
 }
 
 // Display transactions
@@ -242,7 +232,7 @@ function createTransactionElement(transaction) {
             </div>
         </div>
         <div class="transaction-amount ${amountClass}">
-            ₹${(transaction.amount || 0).toLocaleString()}
+            ₹${(transaction.amount || 0).toFixed(1)}
         </div>
     `;
     
@@ -354,7 +344,7 @@ function displayFilteredTransactions(transactions) {
         <div class="total-summary-card">
             <div class="total-summary-content">
                 <h4>Filtered Total</h4>
-                <div class="total-summary-amount">₹${totalAmount.toLocaleString()}</div>
+                <div class="total-summary-amount">₹${totalAmount.toFixed(1)}</div>
                 <div class="total-summary-count">${transactions.length} transaction${transactions.length !== 1 ? 's' : ''}</div>
             </div>
         </div>

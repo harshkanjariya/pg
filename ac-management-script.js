@@ -159,13 +159,13 @@ function updateACSummary() {
     });
     
     // Update UI
-    document.getElementById('totalACBill').textContent = `₹${totalACBill.toLocaleString()}`;
+    document.getElementById('totalACBill').textContent = `₹${totalACBill.toFixed(1)}`;
     document.getElementById('acBillDetails').textContent = 'Total AC charges for current month';
     
-    document.getElementById('pendingACCollections').textContent = `₹${pendingCollections.toLocaleString()}`;
+    document.getElementById('pendingACCollections').textContent = `₹${pendingCollections.toFixed(1)}`;
     document.getElementById('pendingDetails').textContent = 'AC bills not yet collected';
     
-    document.getElementById('totalUnitsConsumed').textContent = totalUnitsConsumed.toLocaleString();
+    document.getElementById('totalUnitsConsumed').textContent = totalUnitsConsumed.toFixed(1);
     document.getElementById('unitsDetails').textContent = 'Total units used this month';
 }
 
@@ -386,19 +386,19 @@ function createACRoomCard(roomId, room, monthData) {
                 <div class="reading-details">
                     <div class="reading-item">
                         <div class="reading-label">Previous</div>
-                        <div class="reading-value">${monthData.previousUnits}</div>
+                        <div class="reading-value">${monthData.previousUnits.toFixed(1)}</div>
                     </div>
                     <div class="reading-item">
                         <div class="reading-label">Current</div>
-                        <div class="reading-value">${monthData.currentUnits}</div>
+                        <div class="reading-value">${monthData.currentUnits.toFixed(1)}</div>
                     </div>
                 </div>
             </div>
             
             <div class="room-bill">
-                <div class="bill-title">AC Bill (${monthData.unitsConsumed} units × ₹${AC_RATE_PER_UNIT})</div>
-                <div class="bill-amount">₹${monthData.totalBill.toLocaleString()}</div>
-                <div class="bill-per-person">₹${monthData.perPersonBill.toFixed(0)} per person (${monthData.occupiedBeds} occupants)</div>
+                <div class="bill-title">AC Bill (${monthData.unitsConsumed.toFixed(1)} units × ₹${AC_RATE_PER_UNIT})</div>
+                <div class="bill-amount">₹${monthData.totalBill.toFixed(1)}</div>
+                <div class="bill-per-person">₹${monthData.perPersonBill.toFixed(1)} per person (${monthData.occupiedBeds} occupants)</div>
             </div>
             
             <div class="fair-calculation">
@@ -410,7 +410,7 @@ function createACRoomCard(roomId, room, monthData) {
                     </div>
                     <div class="summary-row">
                         <span class="summary-label">Daily Rate:</span>
-                        <span class="summary-value">₹${monthData.fairCalculation.dailyRatePerUnit.toFixed(2)}/day</span>
+                        <span class="summary-value">₹${monthData.fairCalculation.dailyRatePerUnit.toFixed(1)}/day</span>
                     </div>
                 </div>
                 <div class="occupant-breakdown">
@@ -419,12 +419,18 @@ function createACRoomCard(roomId, room, monthData) {
                             <div class="occupant-name">${occupant.occupantName}</div>
                             <div class="occupant-details">
                                 <span class="occupancy-days">${occupant.occupancyDays} days</span>
-                                <span class="fair-share">₹${occupant.fairShare.toFixed(0)}</span>
+                                <span class="fair-share">₹${occupant.fairShare.toFixed(1)}</span>
                                 <span class="occupancy-period">${formatOccupancyPeriod(occupant.checkInDate, occupant.checkOutDate, occupant.isPermanent)}</span>
                             </div>
                         </div>
                     `).join('')}
                 </div>
+            </div>
+            
+            <div class="room-actions" style="margin-top: 16px; display: flex; justify-content: center;">
+                <button onclick="generateShareableLink('${roomId}', ${currentMonth}, ${currentYear})" class="btn-share" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    <span>🔗</span> Generate Shareable Link
+                </button>
             </div>
         `;
     } else {
@@ -443,6 +449,26 @@ function createACRoomCard(roomId, room, monthData) {
     
     div.innerHTML = cardContent;
     return div;
+}
+
+// Generate shareable link
+function generateShareableLink(roomId, month, year) {
+    const accessKey = 'comfort-stays-2024'; // This should match the key in ac-preview-script.js
+    const baseUrl = window.location.origin + window.location.pathname.replace('ac-management.html', '');
+    const shareableUrl = `${baseUrl}ac-preview.html?key=${accessKey}&room=${roomId}&month=${month}&year=${year}`;
+    
+    // Copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareableUrl).then(() => {
+            showLinkModal(shareableUrl);
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            showLinkModal(shareableUrl);
+        });
+    } else {
+        // Fallback for older browsers
+        showLinkModal(shareableUrl);
+    }
 }
 
 // Get occupant names in a room
@@ -501,6 +527,9 @@ function displayACHistory() {
                     <button onclick="editHistoryReading('${firstReading.id}')" class="btn-edit-history" title="Edit this month's readings">
                         ✏️ Edit
                     </button>
+                    <button onclick="showHistoryShareOptions('${firstReading.month}', '${firstReading.year}')" class="btn-edit-history" title="Generate shareable link" style="background: linear-gradient(135deg, #10b981, #059669); margin-left: 8px;">
+                        🔗 Share
+                    </button>
                 </div>
             </div>
             <div class="history-rooms">
@@ -519,10 +548,10 @@ function displayACHistory() {
                     <div class="history-room">
                         <div class="history-room-title">${room.name}</div>
                         <div class="history-room-details">
-                            Previous: ${previousReading} units<br>
-                            Current: ${currentUnits} units<br>
-                            Consumed: ${unitsConsumed} units<br>
-                            Bill: ₹${totalBill.toLocaleString()}
+                            Previous: ${previousReading.toFixed(1)} units<br>
+                            Current: ${currentUnits.toFixed(1)} units<br>
+                            Consumed: ${unitsConsumed.toFixed(1)} units<br>
+                            Bill: ₹${totalBill.toFixed(1)}
                         </div>
                     </div>
                 `;
@@ -811,11 +840,11 @@ function createEditReadingModal() {
                         <div class="reading-inputs">
                             <div class="reading-input">
                                 <label for="editroom1Previous">Room 1 (Bottom) - Previous Reading:</label>
-                                <input type="number" id="editroom1Previous" name="room1Previous" min="0" step="1">
+                                <input type="number" id="editroom1Previous" name="room1Previous" min="0" step="0.1">
                             </div>
                             <div class="reading-input">
                                 <label for="editroom1Current">Room 1 (Bottom) - Current Reading:</label>
-                                <input type="number" id="editroom1Current" name="room1Current" min="0" step="1" onchange="calculateEditRoomUnits('room1')">
+                                <input type="number" id="editroom1Current" name="room1Current" min="0" step="0.1" onchange="calculateEditRoomUnits('room1')">
                             </div>
                             <div class="reading-input">
                                 <label for="editroom1Units">Room 1 Units Consumed:</label>
@@ -826,11 +855,11 @@ function createEditReadingModal() {
                         <div class="reading-inputs">
                             <div class="reading-input">
                                 <label for="editroom3Previous">Room 3 (Top) - Previous Reading:</label>
-                                <input type="number" id="editroom3Previous" name="room3Previous" min="0" step="1">
+                                <input type="number" id="editroom3Previous" name="room3Previous" min="0" step="0.1">
                             </div>
                             <div class="reading-input">
                                 <label for="editroom3Current">Room 3 (Top) - Current Reading:</label>
-                                <input type="number" id="editroom3Current" name="room3Current" min="0" step="1" onchange="calculateEditRoomUnits('room3')">
+                                <input type="number" id="editroom3Current" name="room3Current" min="0" step="0.1" onchange="calculateEditRoomUnits('room3')">
                             </div>
                             <div class="reading-input">
                                 <label for="editroom3Units">Room 3 Units Consumed:</label>
@@ -973,5 +1002,148 @@ async function deleteACBillsForReading(readingId) {
         throw error;
     }
 }
+
+// Show link modal
+function showLinkModal(url) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('shareLinkModal');
+    if (!modal) {
+        const modalHTML = `
+            <div id="shareLinkModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 600px;">
+                    <div class="modal-header">
+                        <h3>🔗 Shareable Link Generated</h3>
+                        <span class="close" onclick="closeShareLinkModal()">&times;</span>
+                    </div>
+                    <div class="modal-body" style="padding: 24px;">
+                        <p style="color: #64748b; margin-bottom: 16px;">Share this link to view the AC bill details:</p>
+                        <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px; word-break: break-all;">
+                            <input type="text" id="shareableLinkInput" readonly style="width: 100%; border: none; background: transparent; font-family: monospace; font-size: 14px; color: #1e293b; outline: none;" />
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button onclick="copyShareableLink()" class="btn-primary" style="flex: 1;">
+                                📋 Copy Link
+                            </button>
+                            <button onclick="openShareableLink()" class="btn-secondary" style="flex: 1;">
+                                🔗 Open Link
+                            </button>
+                        </div>
+                        <p style="color: #94a3b8; font-size: 13px; margin-top: 16px; text-align: center;">
+                            ⚠️ This link contains an access key. Keep it secure and share only with authorized persons.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        modal = document.getElementById('shareLinkModal');
+    }
+    
+    // Set the URL
+    document.getElementById('shareableLinkInput').value = url;
+    
+    // Show modal
+    modal.style.display = 'block';
+}
+
+// Close share link modal
+function closeShareLinkModal() {
+    document.getElementById('shareLinkModal').style.display = 'none';
+}
+
+// Copy shareable link
+function copyShareableLink() {
+    const input = document.getElementById('shareableLinkInput');
+    input.select();
+    input.setSelectionRange(0, 99999); // For mobile devices
+    
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(input.value).then(() => {
+            alert('Link copied to clipboard! ✓');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            document.execCommand('copy');
+            alert('Link copied to clipboard! ✓');
+        });
+    } else {
+        // Fallback
+        document.execCommand('copy');
+        alert('Link copied to clipboard! ✓');
+    }
+}
+
+// Open shareable link
+function openShareableLink() {
+    const url = document.getElementById('shareableLinkInput').value;
+    window.open(url, '_blank');
+}
+
+// Show history share options
+function showHistoryShareOptions(month, year) {
+    // Create modal if it doesn't exist
+    let modal = document.getElementById('historyShareModal');
+    if (!modal) {
+        const modalHTML = `
+            <div id="historyShareModal" class="modal" style="display: none;">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h3>🔗 Generate Shareable Link</h3>
+                        <span class="close" onclick="closeHistoryShareModal()">&times;</span>
+                    </div>
+                    <div class="modal-body" style="padding: 24px;">
+                        <p style="color: #64748b; margin-bottom: 20px;">Select a room to generate shareable link:</p>
+                        <div id="historyShareButtons" style="display: flex; flex-direction: column; gap: 12px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        modal = document.getElementById('historyShareModal');
+    }
+    
+    // Create buttons for each AC room
+    const buttonsContainer = document.getElementById('historyShareButtons');
+    buttonsContainer.innerHTML = '';
+    
+    Object.keys(AC_ROOMS).forEach(roomId => {
+        const room = AC_ROOMS[roomId];
+        const button = document.createElement('button');
+        button.className = 'btn-primary';
+        button.style.padding = '16px';
+        button.style.fontSize = '16px';
+        button.innerHTML = `🔗 Generate Link for ${room.name}`;
+        button.onclick = () => {
+            generateShareableLink(roomId, parseInt(month), parseInt(year));
+            closeHistoryShareModal();
+        };
+        buttonsContainer.appendChild(button);
+    });
+    
+    // Show modal
+    modal.style.display = 'block';
+}
+
+// Close history share modal
+function closeHistoryShareModal() {
+    const modal = document.getElementById('historyShareModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modals when clicking outside
+window.addEventListener('click', function(event) {
+    const shareLinkModal = document.getElementById('shareLinkModal');
+    const historyShareModal = document.getElementById('historyShareModal');
+    
+    if (shareLinkModal && event.target === shareLinkModal) {
+        closeShareLinkModal();
+    }
+    
+    if (historyShareModal && event.target === historyShareModal) {
+        closeHistoryShareModal();
+    }
+});
 
 // Sign out is handled by shared-auth.js

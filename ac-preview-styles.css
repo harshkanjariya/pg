@@ -1,0 +1,383 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.preview-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Loading Indicator */
+.loading-indicator {
+    background: white;
+    border-radius: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.loading-spinner {
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-indicator p {
+    color: #64748b;
+    font-size: 16px;
+}
+
+/* Error Message */
+.error-message {
+    background: white;
+    border-radius: 16px;
+    padding: 60px 40px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.error-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.error-message h2 {
+    color: #dc2626;
+    margin-bottom: 12px;
+    font-size: 24px;
+}
+
+.error-message p {
+    color: #64748b;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Preview Content */
+.preview-content {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.preview-header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.preview-logo {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 16px;
+    border-radius: 12px;
+}
+
+.preview-header h1 {
+    color: #1e293b;
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.preview-subtitle {
+    color: #64748b;
+    font-size: 16px;
+}
+
+/* AC Room Card */
+.ac-room-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.room-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f3f4f6;
+}
+
+.room-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.room-status {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    color: white;
+}
+
+.room-occupants {
+    margin-bottom: 20px;
+}
+
+.occupant-count {
+    font-size: 14px;
+    color: #64748b;
+    margin-bottom: 12px;
+    font-weight: 500;
+}
+
+.occupant-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.occupant-tag {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.room-reading {
+    margin-bottom: 20px;
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.reading-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reading-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.reading-item {
+    text-align: center;
+}
+
+.reading-label {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.reading-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.room-bill {
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    border-radius: 8px;
+    color: white;
+}
+
+.bill-title {
+    font-size: 14px;
+    margin-bottom: 12px;
+    opacity: 0.9;
+}
+
+.bill-amount {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+}
+
+.bill-per-person {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.fair-calculation {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.calculation-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 16px;
+}
+
+.calculation-summary {
+    margin-bottom: 16px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.summary-label {
+    color: #64748b;
+    font-weight: 500;
+}
+
+.summary-value {
+    color: #1e293b;
+    font-weight: 700;
+}
+
+.occupant-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 2px solid #e2e8f0;
+}
+
+.occupant-item {
+    background: white;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.occupant-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 8px;
+    font-size: 15px;
+}
+
+.occupant-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.occupancy-days {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.fair-share {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.occupancy-period {
+    background: #f3f4f6;
+    color: #4b5563;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+/* Preview Footer */
+.preview-footer {
+    text-align: center;
+    padding-top: 24px;
+    border-top: 2px solid #f3f4f6;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.preview-footer p {
+    margin-bottom: 8px;
+}
+
+.preview-timestamp {
+    font-size: 12px;
+    color: #94a3b8;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .preview-content {
+        padding: 24px 16px;
+    }
+
+    .preview-header h1 {
+        font-size: 24px;
+    }
+
+    .room-title {
+        font-size: 18px;
+    }
+
+    .bill-amount {
+        font-size: 28px;
+    }
+
+    .reading-details {
+        grid-template-columns: 1fr;
+    }
+
+    .occupant-details {
+        flex-direction: column;
+    }
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background: white;
+    }
+
+    .preview-container {
+        max-width: 100%;
+    }
+
+    .preview-content {
+        box-shadow: none;
+    }
+}
+

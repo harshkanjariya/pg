@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AC Bill Preview - Comfort Stays PG</title>
+    <link rel="stylesheet" href="ac-preview-styles.css">
+    <link rel="icon" type="image/png" href="pg-logo.png">
+</head>
+<body>
+    <div class="preview-container">
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="loading-spinner"></div>
+            <p>Loading AC bill details...</p>
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <div class="error-icon">⚠️</div>
+            <h2>Access Denied</h2>
+            <p id="errorText">Invalid or missing access key.</p>
+        </div>
+
+        <div id="previewContent" class="preview-content" style="display: none;">
+            <div class="preview-header">
+                <img src="pg-logo.png" alt="Comfort Stays PG Logo" class="preview-logo">
+                <h1>Comfort Stays PG</h1>
+                <p class="preview-subtitle">AC Bill Details</p>
+            </div>
+
+            <div id="acRoomCard" class="ac-room-card">
+                <!-- AC room card will be loaded here -->
+            </div>
+
+            <div class="preview-footer">
+                <p>📧 For any queries, please contact the management</p>
+                <p class="preview-timestamp" id="generatedTime"></p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="ac-preview-script.js"></script>
+</body>
+</html>
+

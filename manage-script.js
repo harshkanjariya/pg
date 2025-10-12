@@ -1735,13 +1735,13 @@ function updateDepositSummary() {
     });
     
     // Update the UI
-    document.getElementById('totalDeposits').textContent = `₹${totalDeposits.toLocaleString()}`;
+    document.getElementById('totalDeposits').textContent = `₹${totalDeposits.toFixed(1)}`;
     document.getElementById('depositDetails').textContent = `${occupantsWithDeposits} occupants with deposits`;
     
     document.getElementById('occupancyCount').textContent = `${occupiedBeds}/17`;
     document.getElementById('occupancyDetails').textContent = 'beds occupied';
     
-    document.getElementById('monthlyRevenue').textContent = `₹${totalMonthlyRevenue.toLocaleString()}`;
+    document.getElementById('monthlyRevenue').textContent = `₹${totalMonthlyRevenue.toFixed(1)}`;
     document.getElementById('revenueDetails').textContent = 'from current occupants';
 }
 
