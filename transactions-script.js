@@ -469,7 +469,7 @@ function populateBedDropdown() {
         const option = document.createElement('option');
         option.value = bedId;
         option.textContent = `${roomName} Bed ${bedNumber}${occupantName}`;
-        option.dataset.price = bedData.price || 0;
+        option.dataset.price = bedData.price || 8500;
         bedSelect.appendChild(option);
     });
 }
@@ -497,7 +497,7 @@ function updateAmountFromBed() {
     
     if (bedSelect.value) {
         const selectedOption = bedSelect.selectedOptions[0];
-        const price = parseFloat(selectedOption.dataset.price) || 0;
+        const price = parseFloat(selectedOption.dataset.price) || 8500;
         amountInput.value = price;
         
         // Clear any previous note requirement
